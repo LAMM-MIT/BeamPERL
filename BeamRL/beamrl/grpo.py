@@ -121,11 +121,26 @@ def main():
     # train_dataset = train_dataset.map(
     #     make_conv_for_grpo,
     #     fn_kwargs={"system_prompt": SYSTEM_PROMPT})
+    
+    # Debug: print original dataset size
+    logger.info(f"Original dataset size: {len(train_dataset)}")
+    
+    # Convert to list to ensure we process all examples
+    # (iterating directly over Dataset can sometimes be unreliable)
+    train_dataset_list = [train_dataset[i] for i in range(len(train_dataset))]
+    logger.info(f"Converted to list: {len(train_dataset_list)} examples")
+    
     # Expand dataset: create one example per question in the problem list
     expanded_examples = []
-    for example in train_dataset:
+    for idx, example in enumerate(train_dataset_list):
         results = make_conv_for_grpo(example, SYSTEM_PROMPT, num_questions=None)
         expanded_examples.extend(results)
+        if idx < 3:  # Debug first few examples
+            problem = example.get("problem", "N/A")
+            num_problems = len(problem) if isinstance(problem, list) else 1
+            logger.info(f"Example {idx}: {num_problems} questions -> {len(results)} expanded examples")
+    
+    logger.info(f"Total expanded examples: {len(expanded_examples)}")
     
     # Create new dataset from expanded examples
     train_dataset = Dataset.from_list(expanded_examples)
