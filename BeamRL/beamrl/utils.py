@@ -39,10 +39,49 @@ RL_POST_TRAIN_CONFIG_MAP = {
 }
 
 
-def make_conv_for_grpo(example, system_prompt):
-    return {
-        "prompt": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f'{example["problem"][0]}<\\think>'},
-        ]
-    }
+# def make_conv_for_grpo(example, system_prompt):
+#     return {
+#         "prompt": [
+#             {"role": "system", "content": system_prompt},
+#             {"role": "user", "content": f'{example["problem"][0]}<\\think>'},
+#         ]
+#     }
+def make_conv_for_grpo(example, system_prompt, num_questions=-1):
+    """
+    Create multiple conversation formats for GRPO training, one per question.
+    
+    Args:
+        example: Dataset example with a "problem" field (can be string or list)
+        system_prompt: System prompt to use
+        num_questions: Number of questions to use from the problem list.
+                      If None or -1, uses all questions. Default is -1.
+    
+    Returns:
+        List of dictionaries, each with "prompt" key containing conversation messages.
+        Each dictionary is a separate training example.
+    """
+    # Handle case where problem might be a string or a list
+    if isinstance(example["problem"], str):
+        problems = [example["problem"]]
+    else:
+        problems = example["problem"]
+    
+    # Determine how many questions to use
+    if num_questions is None or num_questions == -1:
+        questions_to_use = problems
+    else:
+        questions_to_use = problems[:num_questions]
+    
+    # Create one training example per question
+    examples = []
+    for question in questions_to_use:
+        examples.append({
+            "prompt": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f'{question}<\\think>'},
+            ],
+            # Preserve other fields from the original example (like solution, answer, etc.)
+            **{k: v for k, v in example.items() if k != "problem"}
+        })
+    
+    return examples

@@ -118,7 +118,10 @@ def main():
 
     SYSTEM_PROMPT = TPH_SYSTEM_PROMPT
 
-    train_dataset = train_dataset.map(
+    # train_dataset = train_dataset.map(
+    #     make_conv_for_grpo,
+    #     fn_kwargs={"system_prompt": SYSTEM_PROMPT})
+    train_dataset = train_dataset.flat_map(
         make_conv_for_grpo,
         fn_kwargs={"system_prompt": SYSTEM_PROMPT})
 
