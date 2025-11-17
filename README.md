@@ -120,39 +120,17 @@ Reward weights can be configured in the training YAML file.
 
 ## License
 
-This project is licensed under the Apache License 2.0. See the [LICENSE.txt](LICENSE.txt) file for details.
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for more information.
 
 ## Acknowledgments
 
-This project is built upon the following open-source repositories:
+This project is built upon the two following open-source repositories. Furthermore, we greatly appreciate the wider open source community for sharing knowledge and resources in this rapidly evolving area that is parameter efficient reinforcement learning fine tuning of large language models.
 
 - **Tina** ([arXiv:2504.15777](https://arxiv.org/abs/2504.15777))  
   > Wang, S., Asilis, J., Akgül, Ö. F., Bilgin, E. B., Liu, O., & Neiswanger, W. (2025). Tina: Tiny Reasoning Models via LoRA.
 
-  ```bibtex
-  @misc{wang2025tinatinyreasoningmodels,
-    title={Tina: Tiny Reasoning Models via LoRA},
-    author={Shangshang Wang and Julian Asilis and Ömer Faruk Akgül and Enes Burak Bilgin and Ollie Liu and Willie Neiswanger},
-    year={2025},
-    eprint={2504.15777},
-    archivePrefix={arXiv},
-    primaryClass={cs.CL},
-    url={https://arxiv.org/abs/2504.15777}
-  }
-  ```
-
 - **Open R1** ([GitHub](https://github.com/huggingface/open-r1))  
   > Hugging Face. (2025, January). Open R1: A fully open reproduction of DeepSeek-R1.
-
-  ```bibtex
-  @misc{openr1,
-    title={Open R1: A fully open reproduction of DeepSeek-R1},
-    url={https://github.com/huggingface/open-r1},
-    author={{Hugging Face}},
-    month={January},
-    year={2025}
-  }
-  ```
 
 ## Citation
 
