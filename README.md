@@ -16,14 +16,14 @@ BeamPERL is a reinforcement learning framework designed to develop self-taught l
 
 ```
 BeamRL/
-├── beamrl/                            # Core package
+├── beamrl/                            
 │   ├── grpo.py                        # Main GRPO training script
 │   ├── rewards.py                     # Reward function implementations
 │   ├── utils.py                       # Utility functions and configurations
-│   ├── callback.py                    # Training callbacks (evaluation, hub push)
+│   ├── callback.py                    # Training callbacks
 │   └── merge_post_trained_models.py   # Model merging utilities
-├── recipes/                           # Configuration files
-│   ├── train_model_tph.yaml           # Training configuration for TPH dataset
+├── recipes/                           
+│   ├── train_model_tph.yaml           # Training configuration
 │   └── zero2.yaml                     # DeepSpeed ZeRO-2 configuration
 ├── scripts/
 │   ├── train/                         # Training scripts
@@ -33,10 +33,10 @@ BeamRL/
 │       ├── eval_post_train.sh
 │       └── run_eval_custom_tasks.py
 └── setup/                             # Environment setup
-    ├── environment.yml                # Conda environment specification
-    ├── set_vars.sh                    # Environment variables
-    ├── set_env.sh                     # Environment setup script
-    └── prepare.sh                     # Preparation script
+    ├── environment.yml                
+    ├── set_vars.sh                    
+    ├── set_env.sh                     
+    └── prepare.sh                     
 ```
 
 ## Installation
