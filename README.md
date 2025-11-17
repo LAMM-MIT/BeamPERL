@@ -115,7 +115,7 @@ Reward weights can be configured in the training YAML file.
 - Datasets are automatically downloaded from HuggingFace using the `datasets` library.
 - The framework can be extended to support additional datasets via the `RL_POST_TRAIN_CONFIG_MAP` in `utils.py`
 
-## Dataset generation
+## Dataset Generation
 
 The `DataGen/` directory contains a Jupyter notebook (`dataGen.ipynb`) for generating synthetic beam mechanics datasets used for training. The dataset generation process involves: (1) creating beam configurations with varying symbolic parameters (lengths, loads, support positions), (2) solving beam equations symbolically using the SymBeam library to obtain reactions, moments, and deflections, (3) generating natural language questions using LLMs that ask about reaction forces at supports, and (4) extracting ground-truth answers from the solved beam equations. The notebook uploads the final processed dataset to the HuggingFace Hub, which can then be used for training by BeamRL.
 
@@ -131,12 +131,10 @@ This project is built upon the two open source repositories Tina and Open R1. Th
   > Wang, S., Asilis, J., Akgül, Ö. F., Bilgin, E. B., Liu, O., & Neiswanger, W. (2025). Tina: Tiny Reasoning Models via LoRA. [arXiv:2504.15777](https://arxiv.org/abs/2504.15777) [cs.CL]
 
 - **Open R1**
-  > Hugging Face. (2025, January). Open R1: A fully open reproduction of DeepSeek-R1.
-  [Open R1](https://github.com/huggingface/open-r1)
+  > Hugging Face. (2025, January). Open R1: A fully open reproduction of DeepSeek-R1. [Open R1](https://github.com/huggingface/open-r1)
 
 - **SymBeam**
-  > Carneiro, A. (2020). SymBeam: A pedagogical package for beam bending.  
-  [GitHub](https://github.com/amcc1996/symbeam)
+  > Carneiro, A. (2020). SymBeam: A pedagogical package for beam bending. [GitHub](https://github.com/amcc1996/symbeam)
 
 ## Citation
 
