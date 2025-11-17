@@ -51,7 +51,7 @@ BeamRL/
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/tphage/BeamPERL.git
    cd BeamRL
    ```
 
@@ -63,8 +63,8 @@ BeamRL/
 
 3. **Set up environment variables and download the base model**:
    ```bash
-   ./setup/set_env.sh
-   ./setup/prepare.sh
+   bash ./setup/set_env.sh
+   bash ./setup/prepare.sh
    ```
 
 ## Configuration
@@ -88,7 +88,7 @@ The `save_name` field sets the output directory for model checkpoints, determine
 To train a model using GRPO:
 
 ```bash
-./scripts/train/post_train_model_grpo.sh
+bash ./scripts/train/post_train_model_grpo.sh
 ```
 
 ### GRPO Trainer
