@@ -121,9 +121,14 @@ def main():
     # train_dataset = train_dataset.map(
     #     make_conv_for_grpo,
     #     fn_kwargs={"system_prompt": SYSTEM_PROMPT})
-    train_dataset = train_dataset.flat_map(
-        make_conv_for_grpo,
-        fn_kwargs={"system_prompt": SYSTEM_PROMPT})
+    # Expand dataset: create one example per question in the problem list
+    expanded_examples = []
+    for example in train_dataset:
+        results = make_conv_for_grpo(example, SYSTEM_PROMPT, num_questions=None)
+        expanded_examples.extend(results)
+    
+    # Create new dataset from expanded examples
+    train_dataset = Dataset.from_list(expanded_examples)
 
     print("\n\nTrain_dataset\n\n")
     print(train_dataset)
