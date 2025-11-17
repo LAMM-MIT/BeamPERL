@@ -135,8 +135,6 @@ This project is built upon the two following open-source repositories. Furthermo
 
 ## Citation
 
-If you use this codebase in your research, please cite:
-
 ```bibtex
 @misc{hage2025beamperl,
   title={BeamPERL: Parameter-Efficient Reinforcement Learning for Verifiable Beam Mechanics Problem-Solving},
