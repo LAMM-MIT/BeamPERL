@@ -34,7 +34,7 @@ Find the number of minutes the walk takes her, including the $t$ minutes spent i
 
 # problem/question, (solution), answer => combined text for uninstructed models
 RL_POST_TRAIN_CONFIG_MAP = {
-    "tph": "tphage/beam-analysis-dataset-251114",
+    "tph": "tphage/BeamRL-TrainData",
     "tph_1": "tphage/dataset_QA_250730_SFT",
     "tph_2": "tphage/dataset_QA_250907",
 }
