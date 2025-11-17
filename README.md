@@ -16,27 +16,27 @@ BeamPERL is a reinforcement learning framework designed to develop self-taught l
 
 ```
 BeamRL/
-├── beamrl/                    # Core package
-│   ├── grpo.py               # Main GRPO training script
-│   ├── rewards.py            # Reward function implementations
-│   ├── utils.py              # Utility functions and configurations
-│   ├── callback.py           # Training callbacks (evaluation, hub push)
-│   └── merge_post_trained_models.py  # Model merging utilities
-├── recipes/                   # Configuration files
-│   ├── train_model_tph.yaml  # Training configuration for TPH dataset
-│   └── zero2.yaml            # DeepSpeed ZeRO-2 configuration
+├── beamrl/                            # Core package
+│   ├── grpo.py                        # Main GRPO training script
+│   ├── rewards.py                     # Reward function implementations
+│   ├── utils.py                       # Utility functions and configurations
+│   ├── callback.py                    # Training callbacks (evaluation, hub push)
+│   └── merge_post_trained_models.py   # Model merging utilities
+├── recipes/                           # Configuration files
+│   ├── train_model_tph.yaml           # Training configuration for TPH dataset
+│   └── zero2.yaml                     # DeepSpeed ZeRO-2 configuration
 ├── scripts/
-│   ├── train/                # Training scripts
+│   ├── train/                         # Training scripts
 │   │   └── post_train_model_grpo.sh
-│   └── eval/                 # Evaluation scripts
+│   └── eval/                          # Evaluation scripts
 │       ├── eval_baselines.sh
 │       ├── eval_post_train.sh
 │       └── run_eval_custom_tasks.py
-└── setup/                     # Environment setup
-    ├── environment.yml        # Conda environment specification
-    ├── set_vars.sh           # Environment variables
-    ├── set_env.sh             # Environment setup script
-    └── prepare.sh             # Preparation script
+└── setup/                             # Environment setup
+    ├── environment.yml                # Conda environment specification
+    ├── set_vars.sh                    # Environment variables
+    ├── set_env.sh                     # Environment setup script
+    └── prepare.sh                     # Preparation script
 ```
 
 ## Installation
