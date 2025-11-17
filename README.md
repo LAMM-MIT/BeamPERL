@@ -126,10 +126,10 @@ This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) fo
 
 This project is built upon the two following open-source repositories. Furthermore, we greatly appreciate the wider open source community for sharing knowledge and resources in this rapidly evolving area that is parameter efficient reinforcement learning fine tuning of large language models.
 
-- **Tina** ([arXiv:2504.15777](https://arxiv.org/abs/2504.15777))  
+- **Tina: Tiny Reasoning Models via LoRA**
   > Wang, S., Asilis, J., Akgül, Ö. F., Bilgin, E. B., Liu, O., & Neiswanger, W. (2025). Tina: Tiny Reasoning Models via LoRA.
 
-- **Open R1** ([GitHub](https://github.com/huggingface/open-r1))  
+- **Open R1**
   > Hugging Face. (2025, January). Open R1: A fully open reproduction of DeepSeek-R1.
 
 ## Citation
