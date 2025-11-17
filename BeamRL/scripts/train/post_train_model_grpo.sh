@@ -4,7 +4,7 @@
 echo "START TIME: $(date)"
 echo "PYTHON ENV: $(which python)"
 
-source "./scripts/set/set_vars.sh"
+source "./setup/set_vars.sh"
 
 export CUDA_VISIBLE_DEVICES=0,1
 GPU_COUNT=$(python -c "import torch; print(torch.cuda.device_count())")

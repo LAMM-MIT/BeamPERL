@@ -52,7 +52,7 @@ BeamRL/
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/tphage/BeamPERL.git
-   cd BeamRL
+   cd BeamPERL/BeamRL
    ```
 
 2. **Create and activate the conda environment**:
@@ -61,31 +61,28 @@ BeamRL/
    conda activate beamrl
    ```
 
-3. **Set up environment variables and download the base model**:
+3. **Modify the environment variables if needed**
+   Edit `setup/set_vars.sh` to configure:
+   - `HOME_PREFIX`: Base directory for project files
+   - `PROJECT_PREFIX`: Project directory location
+   - `WANDB_API_KEY`: Your Weights & Biases API key
+   - `HF_TOKEN`: Your HuggingFace API token
+
+4. **Set up environment variables and download the base model**:
    ```bash
    bash ./setup/set_env.sh
    bash ./setup/prepare.sh
    ```
 
-## Configuration
-
-### Environment Variables
-
-Edit `setup/set_vars.sh` to configure:
-- `HOME_PREFIX`: Base directory for project files
-- `PROJECT_PREFIX`: Project directory location
-- `WANDB_API_KEY`: Your Weights & Biases API key
-- `HF_TOKEN`: Your HuggingFace API token
+## Training
 
 ### Training Configuration
 
-Training parameters are defined in YAML files in the `recipes/` directory.
+Training parameters are defined in YAML file in the `recipes/` directory.
 
 The `save_name` field sets the output directory for model checkpoints, determines the W&B run name, and specifies the name used when pushing models to the HuggingFace Hub. The default is `tph_260101`.
 
-## Training
-
-To train a model using GRPO:
+### Run training
 
 ```bash
 bash ./scripts/train/post_train_model_grpo.sh
