@@ -6,7 +6,7 @@ BeamPERL is a reinforcement learning framework designed to develop self-taught l
 
 - **GRPO Training**: Implements Group Relative Policy Optimization for RLFT
 - **PEFT**: Supports Parameter-Efficient Fine-Tuning with LoRA adapters
-- **Custom Reward Functions**: Includes accuracy and format-based reward functions for beam mechanics reasoning
+- **Custom Reward Functions**: Includes custom accuracy and format-based reward functions
 - **DeepSpeed Integration**: Supports distributed training with DeepSpeed ZeRO-2
 - **vLLM Integration**: Uses vLLM for efficient inference during training
 - **HuggingFace Hub Integration**: Automatic model pushing to HuggingFace Hub
