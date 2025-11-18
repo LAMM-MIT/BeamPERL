@@ -119,6 +119,8 @@ Reward weights can be configured in the training YAML file.
 
 The `DataGen/` directory contains a Jupyter notebook (`dataGen.ipynb`) for generating synthetic beam mechanics datasets used for training. The dataset generation process involves: (1) creating beam configurations with varying symbolic parameters (lengths, loads, support positions), (2) solving beam equations symbolically using the SymBeam library to obtain reactions, moments, and deflections, (3) generating natural language questions using LLMs that ask about reaction forces at supports, and (4) extracting ground-truth answers from the solved beam equations. The notebook uploads the final processed dataset to the HuggingFace Hub, which can then be used for training by BeamRL.
 
+Additionally, the `DataGen/` directory contains an evaluation dataset generation notebook (`dataGen_eval.ipynb`) for creating evaluation datasets used to assess model performance.
+
 ## License
 
 This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for more information.
