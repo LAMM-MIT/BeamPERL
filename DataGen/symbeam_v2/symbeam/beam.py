@@ -515,10 +515,29 @@ class beam:
         all_x_coord_symbol.extend(distributed_x_start_symbol)
         all_x_coord_symbol.extend(distributed_x_end_symbol)
 
-        all_x_coord_symbol = [
-            item for _, item in sorted(zip(all_x_coord_numeric, all_x_coord_symbol))
-        ]
-        all_x_coord_numeric.sort()
+        # Convert SymPy numeric values to Python floats for sorting
+        # This prevents "cannot determine truth value of Relational" errors
+        import sympy
+        all_x_coord_numeric_float = []
+        for val in all_x_coord_numeric:
+            if isinstance(val, sympy.Basic):
+                # Convert SymPy numeric to Python float
+                try:
+                    all_x_coord_numeric_float.append(float(val.evalf()))
+                except (TypeError, ValueError):
+                    # If conversion fails, try direct float conversion
+                    all_x_coord_numeric_float.append(float(val))
+            else:
+                all_x_coord_numeric_float.append(float(val))
+        
+        # Sort coordinates using only the numeric (float) keys to avoid SymPy comparisons
+        sorted_x_coords = sorted(
+            zip(all_x_coord_numeric_float, all_x_coord_symbol),
+            key=lambda pair: pair[0]
+        )
+        all_x_coord_symbol = [item for _, item in sorted_x_coords]
+        all_x_coord_numeric_float.sort()
+        all_x_coord_numeric = all_x_coord_numeric_float
 
         keep_x_coord = [True]
         for i in range(1, len(all_x_coord_numeric)):
