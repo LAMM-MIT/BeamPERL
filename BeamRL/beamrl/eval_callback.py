@@ -11,7 +11,7 @@ from huggingface_hub import create_branch, create_repo, list_repo_commits, uploa
 from datasets import load_dataset
 from tqdm import tqdm
 
-from beamrl.utils import TPH_SYSTEM_PROMPT, RL_POST_TRAIN_CONFIG_MAP, FIXED_PROMPT_FOR_EVALUATION
+from beamrl.utils import SYSTEM_PROMPT, RL_POST_TRAIN_CONFIG_MAP, FIXED_PROMPT_FOR_EVALUATION
 from beamrl.rewards import accuracy_reward, format_reward
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class DatasetEvaluationCallback(TrainerCallback):
                  eval_dataset_name: str,
                  eval_dataset_config: str | None = None,
                  eval_split: str = "test",
-                 system_prompt=TPH_SYSTEM_PROMPT,
+                 system_prompt=SYSTEM_PROMPT,
                  max_generation_length=4096,
                  eval_steps=500,
                  batch_size=8,
@@ -298,7 +298,7 @@ class DatasetEvaluationCallback(TrainerCallback):
 
 class FixedPromptEvaluationCallback(TrainerCallback):
     def __init__(self,
-                 system_prompt=TPH_SYSTEM_PROMPT,
+                 system_prompt=SYSTEM_PROMPT,
                  prompt=FIXED_PROMPT_FOR_EVALUATION,
                  max_generation_length=4096, eval_steps=100):
 

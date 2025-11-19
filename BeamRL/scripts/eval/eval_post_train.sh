@@ -15,7 +15,7 @@ echo ""
 
 MODEL_NAME="DeepSeek-R1-Distill-Qwen-1.5B"
 PT_TYPE="grpo"
-PT_CONFIG_NAME="tph"
+PT_CONFIG_NAME="beamrl"
 
 CKPT_LIST=("checkpoint-20")
 

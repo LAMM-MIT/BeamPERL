@@ -23,7 +23,7 @@ BeamRL/
 │   ├── callback.py                    # Training callbacks
 │   └── merge_post_trained_models.py   # Model merging utilities
 ├── recipes/                           
-│   ├── train_model_tph.yaml           # Training configuration
+│   ├── train_model_beamrl.yaml           # Training configuration
 │   └── zero2.yaml                     # DeepSpeed ZeRO-2 configuration
 ├── scripts/
 │   ├── train/                         # Training scripts
@@ -80,7 +80,7 @@ BeamRL/
 
 Training parameters are defined in YAML file in the `recipes/` directory.
 
-The `save_name` field sets the output directory for model checkpoints, determines the W&B run name, and specifies the name used when pushing models to the HuggingFace Hub. The default is `tph_260101`.
+The `save_name` field sets the output directory for model checkpoints, determines the W&B run name, and specifies the name used when pushing models to the HuggingFace Hub. The default is `beamrl_260101`.
 
 ### Run training
 
@@ -111,7 +111,8 @@ Reward weights can be configured in the training YAML file.
 
 ### Datasets
 
-- **TPH**: Custom beam mechanics QA dataset
+- **beamrl**: Custom beam mechanics QA dataset
+- **beamrl_eval**: Custom beam mechanics QA dataset
 - Datasets are automatically downloaded from HuggingFace using the `datasets` library.
 - The framework can be extended to support additional datasets via the `RL_POST_TRAIN_CONFIG_MAP` in `utils.py`
 

@@ -1,4 +1,4 @@
-model_post_train_dataset_name: tph
+model_post_train_dataset_name: beamrl
 model_post_train_type: grpo
 rl_post_train_reward_funcs:
 - format
@@ -58,7 +58,7 @@ per_device_train_batch_size: 4
 report_to:
 - wandb
 
-save_name: tph_260101
+save_name: beamrl_260101
 save_strategy: steps
 save_steps: 2
 save_total_limit: 10

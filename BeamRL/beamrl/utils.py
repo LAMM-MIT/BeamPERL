@@ -5,7 +5,7 @@ from typing import Literal
 class ModelPTConfig:
     # //*******Model post-training configs*******//
     model_post_train_type: Literal["grpo", "sft"] = field(default="grpo")
-    model_post_train_dataset_name: str = field(default="tph")
+    model_post_train_dataset_name: str = field(default="beamrl")
     model_post_train_dataset_config: str | None = field(default=None)
     trace_free: bool = field(default=True)
     # Optional custom save bucket name for checkpoints and hub repo suffix
@@ -19,11 +19,19 @@ REASON_CHAT_TEMPLATE = "{% if not add_generation_prompt is defined %}{% set add_
 
 # problem/question, (solution), answer => combined text for uninstructed models
 RL_POST_TRAIN_CONFIG_MAP = {
-    "tph": "tphage/BeamRL-TrainData",
-    "beamrl_eval": "tphage/BeamRL-EvalData",
-    "tph_1": "tphage/dataset_QA_250730_SFT",
-    "tph_2": "tphage/dataset_QA_250907",
+    "beamrl":       "tphage/BeamRL-TrainData",
+    "beamrl_eval":  "tphage/BeamRL-EvalData",
+    "tph":          "tphage/BeamRL-TrainData",
+    "tph_1":        "tphage/dataset_QA_250730_SFT",
+    "tph_2":        "tphage/dataset_QA_250907",
 }
+
+SYSTEM_PROMPT = """
+A conversation between User and Assistant. The user asks a question, and the Assistant solves it.
+The assistant first thinks about the reasoning process in the mind and then provides the user with the answer, and put your final answer within \\boxed{{}} .
+The reasoning process and answer are enclosed within <think> </think> tags, respectively, 
+i.e., <think> reasoning process here </think> answer here and then the final answer within \\boxed{{}}.
+"""
 
 TPH_SYSTEM_PROMPT = """
 A conversation between User and Assistant. The user asks a question, and the Assistant solves it.

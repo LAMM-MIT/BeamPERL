@@ -15,7 +15,7 @@ echo ""
 
 BASE_MODEL_NAME="DeepSeek-R1-Distill-Qwen-1.5B" # Qwen2.5-1.5B
 PT_TYPE="grpo"
-PT_CONFIG_NAME="tph"
+PT_CONFIG_NAME="beamrl"
 
 PY_SCRIPT="./beamrl/grpo.py"
 PY_CONFIG="./recipes/train_model_${PT_CONFIG_NAME}.yaml"

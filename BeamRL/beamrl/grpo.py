@@ -19,7 +19,7 @@ from beamrl.utils import (
     make_conv_for_grpo,
     REASON_CHAT_TEMPLATE,
     RL_POST_TRAIN_CONFIG_MAP,
-    TPH_SYSTEM_PROMPT
+    SYSTEM_PROMPT
 )
 from beamrl.callback import FixedPromptEvaluationCallback, PushToHubRevisionCallback
 from beamrl.eval_callback import DatasetEvaluationCallback
@@ -117,7 +117,7 @@ def main():
     elif "query" in train_dataset.column_names:
         train_dataset = train_dataset.rename_column('query', 'problem')    
 
-    SYSTEM_PROMPT = TPH_SYSTEM_PROMPT
+    # SYSTEM_PROMPT = SYSTEM_PROMPT
 
     # train_dataset = train_dataset.map(
     #     make_conv_for_grpo,

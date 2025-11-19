@@ -9,7 +9,7 @@ import wandb
 from concurrent.futures import Future
 from huggingface_hub import create_branch, create_repo, list_repo_commits, upload_folder
 
-from beamrl.utils import FIXED_PROMPT_FOR_EVALUATION, TPH_SYSTEM_PROMPT
+from beamrl.utils import FIXED_PROMPT_FOR_EVALUATION, SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class DummyConfig:
 
 class FixedPromptEvaluationCallback(TrainerCallback):
     def __init__(self,
-                 system_prompt=TPH_SYSTEM_PROMPT,
+                 system_prompt=SYSTEM_PROMPT,
                  prompt=FIXED_PROMPT_FOR_EVALUATION,
                  max_generation_length=4096, eval_steps=100):
 
