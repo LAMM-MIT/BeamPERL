@@ -5,10 +5,58 @@ from typing import Optional, List, Tuple
 
 def accuracy_reward(completions: list[list[dict[str, str]]], solution: list[str], **kwargs) -> list[Optional[float]]:
 
+    def single_accuracy_reward(generation_text: str, ground_truth_terms: List[str], symbol_regex: str = _symbol_pat, tol: float = 1e-4) -> int:
+        """
+        Compute accuracy reward by comparing the parsed prediction extracted from
+        the model output to the ground truth terms like ["0.1P", "1.9P"].
+
+        Returns 1 if they match as multisets within tolerance, else 0.
+        """
+        after = _text_after_think(generation_text)
+        if not after:
+            # after = generation_text or ""
+            after = ""
+
+        print("Text after think:")
+        after_for_print = after.replace("<|fim_pad|>", "")
+        print(after_for_print)
+        del after_for_print
+        print("\n")
+
+        pred = extract_coeffs_times_symbol(after, symbol_regex=symbol_regex, type="pred")
+        gold = parse_ground_truth(ground_truth_terms, symbol_regex=symbol_regex)
+
+        if isinstance(pred, list) and isinstance(gold, list):
+            ok = True
+            for g in gold:
+                # print(f"Looking for {g} (type: {type(g)})")
+                # Accept if any prediction is within tolerance
+                if any(abs(p - g) <= tol for p in pred):
+                    # print(f"Found {g}")
+                    pass
+                else:
+                    # print(f"Not found {g}")
+                    ok = False
+                    break
+        else:
+            ok = False
+
+        print("Gold:")
+        print(gold)
+        print("Pred:")
+        print(pred)
+        print("Passed:")
+        print(ok)
+
+        if ok:
+            return pred, float(1)
+        else:
+            return pred, float(0)
+
     contents = [completion[0]["content"] for completion in completions]
     rewards = []
     for content, sol in zip(contents, solution):
-        pred, reward = accuracy_reward_tph(content, sol)
+        pred, reward = single_accuracy_reward(content, sol)
         rewards.append(reward)
     
     print("--------------------------------Accuracy rewards--------------------------------")
@@ -193,51 +241,3 @@ def extract_coeffs_times_symbol(text: str, symbol_regex: str = _symbol_pat, type
     items.sort(key=lambda t: t[0])
     coeffs = [val for _, _, val in items]
     return coeffs
-
-def accuracy_reward_tph(generation_text: str, ground_truth_terms: List[str], symbol_regex: str = _symbol_pat, tol: float = 1e-4) -> int:
-    """
-    Compute accuracy reward by comparing the parsed prediction extracted from
-    the model output to the ground truth terms like ["0.1P", "1.9P"].
-
-    Returns 1 if they match as multisets within tolerance, else 0.
-    """
-    after = _text_after_think(generation_text)
-    if not after:
-        # after = generation_text or ""
-        after = ""
-
-    print("Text after think:")
-    after_for_print = after.replace("<|fim_pad|>", "")
-    print(after_for_print)
-    del after_for_print
-    print("\n")
-
-    pred = extract_coeffs_times_symbol(after, symbol_regex=symbol_regex, type="pred")
-    gold = parse_ground_truth(ground_truth_terms, symbol_regex=symbol_regex)
-
-    if isinstance(pred, list) and isinstance(gold, list):
-        ok = True
-        for g in gold:
-            # print(f"Looking for {g} (type: {type(g)})")
-            # Accept if any prediction is within tolerance
-            if any(abs(p - g) <= tol for p in pred):
-                # print(f"Found {g}")
-                pass
-            else:
-                # print(f"Not found {g}")
-                ok = False
-                break
-    else:
-        ok = False
-
-    print("Gold:")
-    print(gold)
-    print("Pred:")
-    print(pred)
-    print("Passed:")
-    print(ok)
-
-    if ok:
-        return pred, float(1)
-    else:
-        return pred, float(0)
