@@ -11,7 +11,7 @@ from huggingface_hub import create_branch, create_repo, list_repo_commits, uploa
 from datasets import load_dataset
 from tqdm import tqdm
 
-from beamrl.utils import SYSTEM_PROMPT, RL_POST_TRAIN_CONFIG_MAP, FIXED_PROMPT_FOR_EVALUATION
+from beamrl.utils import SYSTEM_PROMPT, RL_POST_TRAIN_CONFIG_MAP, FIXED_PROMPT_FOR_EVALUATION    # TO BE UPDATED
 from beamrl.rewards import accuracy_reward, format_reward
 
 logger = logging.getLogger(__name__)
@@ -122,11 +122,54 @@ class DatasetEvaluationCallback(TrainerCallback):
                 wandb.log(wandb_metrics)
                 
                 logger.info(f"Evaluation metrics at step {state.global_step}: {wandb_metrics}")
+                
+                # Create and log table with prompts, generations, and per-generation metrics
+                table_data = []
+                for idx, (prompt, solution, generations, acc_rewards, fmt_rewards) in enumerate(
+                    zip(
+                        metrics["prompts"],
+                        metrics["solutions"],
+                        metrics["generations"],
+                        metrics["accuracy_rewards"],
+                        metrics["format_rewards"]
+                    )
+                ):
+                    row = {
+                        "step": state.global_step,
+                        "sample_idx": idx,
+                        "prompt": prompt,
+                        "solution": str(solution) if solution else "",
+                    }
+                    # Add columns for each generation
+                    for gen_idx in range(self.num_generations):
+                        row[f"generation_{gen_idx + 1}"] = generations[gen_idx] if gen_idx < len(generations) else ""
+                        row[f"accuracy_gen_{gen_idx + 1}"] = acc_rewards[gen_idx] if gen_idx < len(acc_rewards) else 0.0
+                        row[f"format_gen_{gen_idx + 1}"] = fmt_rewards[gen_idx] if gen_idx < len(fmt_rewards) else 0.0
+                    
+                    table_data.append(row)
+                
+                if table_data:
+                    df = pd.DataFrame(table_data)
+                    wandb.log({f"eval/generations_table_step_{state.global_step}": wandb.Table(dataframe=df)})
+                    logger.info(f"Logged {len(table_data)} evaluation samples to WandB table")
 
     def evaluate_dataset(self, model, tokenizer):
         """Evaluate the model on the full dataset."""
         if self.eval_dataset is None:
-            return {"accuracy": 0.0, "format_score": 0.0, "num_samples": 0}
+            return {
+                "accuracy": 0.0, 
+                "format_score": 0.0, 
+                "num_samples": 0,
+                "accuracy_at_1": 0.0,
+                "accuracy_majority": 0.0,
+                "accuracy_avg": 0.0,
+                "num_generations_per_sample": self.num_generations,
+                "prompts": [],
+                "solutions": [],
+                "generations": [],
+                "accuracy_rewards": [],
+                "format_rewards": []
+            }
         
         # Set model to inference mode if using PEFT
         if hasattr(model, "peft_config"):
@@ -137,6 +180,10 @@ class DatasetEvaluationCallback(TrainerCallback):
         # Store all generations per question for majority@k evaluation
         all_question_accuracy_rewards = []  # List of lists: [question_idx][generation_idx]
         all_format_rewards = []
+        # Store data for logging table
+        all_prompts = []
+        all_solutions = []
+        all_generations = []  # List of lists: [question_idx][generation_idx]
         
         # Process dataset in batches
         num_batches = (len(self.eval_dataset) + self.batch_size - 1) // self.batch_size
@@ -222,11 +269,18 @@ class DatasetEvaluationCallback(TrainerCallback):
                 # Reorganize: group by question instead of by generation
                 # all_completions_per_question[gen_idx][question_idx] -> question_completions[question_idx][gen_idx]
                 question_completions = []
+                batch_generations_text = []  # Store actual generation text for logging
                 for q_idx in range(len(batch)):
                     question_completions.append([
                         all_completions_per_question[gen_idx][q_idx]
                         for gen_idx in range(self.num_generations)
                     ])
+                    # Extract generation text for logging
+                    generations_text = [
+                        all_completions_per_question[gen_idx][q_idx][0]["content"]
+                        for gen_idx in range(self.num_generations)
+                    ]
+                    batch_generations_text.append(generations_text)
                 
                 # Compute rewards for this batch
                 batch_question_accuracy_rewards = []  # List of lists: [question_idx][generation_idx]
@@ -260,6 +314,9 @@ class DatasetEvaluationCallback(TrainerCallback):
                 
                 all_question_accuracy_rewards.extend(batch_question_accuracy_rewards)
                 all_format_rewards.extend(batch_format_rewards)
+                all_prompts.extend(batch_prompts)
+                all_solutions.extend(batch_solutions)
+                all_generations.extend(batch_generations_text)
         
         # Restore training mode
         if hasattr(model, "peft_config"):
@@ -292,7 +349,13 @@ class DatasetEvaluationCallback(TrainerCallback):
             "accuracy_avg": float(accuracy_avg),
             "format_score": float(format_score),
             "num_samples": len(all_question_accuracy_rewards),
-            "num_generations_per_sample": self.num_generations
+            "num_generations_per_sample": self.num_generations,
+            # Data for logging table
+            "prompts": all_prompts,
+            "solutions": all_solutions,
+            "generations": all_generations,
+            "accuracy_rewards": all_question_accuracy_rewards,
+            "format_rewards": all_format_rewards
         }
 
 

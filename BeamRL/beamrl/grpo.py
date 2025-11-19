@@ -21,8 +21,8 @@ from beamrl.utils import (
     RL_POST_TRAIN_CONFIG_MAP,
     SYSTEM_PROMPT
 )
-from beamrl.callback import FixedPromptEvaluationCallback, PushToHubRevisionCallback
-from beamrl.eval_callback import DatasetEvaluationCallback
+from beamrl.callback import FixedPromptEvaluationCallback, PushToHubRevisionCallback    # TO BE DELETED
+from beamrl.eval_callback import DatasetEvaluationCallback                              # TO BE UPDATED
 from beamrl.rewards import (
     accuracy_reward,
     format_reward)
@@ -178,14 +178,14 @@ def main():
     #     # PushToHubRevisionCallback(dataset_name=pt_args.model_post_train_dataset_name, use_peft=model_args.use_peft)
     # ]
     callbacks = [
-    DatasetEvaluationCallback(
-        eval_dataset_name="beamrl_eval",
-        eval_split="train",
-        num_generations=5,  # Generate 5 answers per question
-        eval_steps=training_args.save_steps,
-        batch_size=8
-    )
-]
+        DatasetEvaluationCallback(
+            eval_dataset_name="beamrl_eval",
+            eval_split="train",
+            num_generations=5,  # Generate 5 answers per question
+            eval_steps=training_args.save_steps,
+            batch_size=8
+        )
+    ]
 
     trainer = GRPOTrainer(
         model=model,

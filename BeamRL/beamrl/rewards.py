@@ -3,6 +3,32 @@
 import re
 from typing import Optional, List, Tuple
 
+def format_reward(completions, **kwargs):
+    #"""Reward function that checks if the reasoning process is enclosed within <think> and </think> tags, while the final answer is enclosed within <answer> and </answer> tags."""
+    """Reward function that checks if the reasoning process is enclosed within <think> and </think> tags, by checking if there is a single </think> tag in the completion."""
+
+    def count_tags(text: str) -> float:
+        count = 0.0
+        # We only count </think> tag, because <think> tag is available in system prompt
+        if text.count("\n</think>\n") == 1:
+            #count += 1.0
+
+            # New: add 1 if there is a non-empty \boxed{...} after the final </think>
+            last_think = text.rfind("\n</think>\n")
+            if last_think != -1:
+                after = text[last_think + len("\n</think>\n"):]
+                boxes = re.findall(r"\\boxed\s*{\s*([^}]*)\s*}", after, flags=re.DOTALL)
+                if any(b.strip() for b in boxes):
+                    count += 1.0
+        return count
+
+    contents = [completion[0]["content"] for completion in completions]
+    format_rewards = [count_tags(c) for c in contents]
+    print("--------------------------------Format rewards--------------------------------")
+    print(format_rewards)
+    print("--------------------------------Format rewards--------------------------------")
+    return format_rewards
+
 def accuracy_reward(completions: list[list[dict[str, str]]], solution: list[str], **kwargs) -> list[Optional[float]]:
 
     def single_accuracy_reward(generation_text: str, ground_truth_terms: List[str], symbol_regex: str = _symbol_pat, tol: float = 1e-4) -> int:
@@ -63,33 +89,6 @@ def accuracy_reward(completions: list[list[dict[str, str]]], solution: list[str]
     print(rewards)
     print("--------------------------------Accuracy rewards--------------------------------")
     return rewards
-
-
-def format_reward(completions, **kwargs):
-    #"""Reward function that checks if the reasoning process is enclosed within <think> and </think> tags, while the final answer is enclosed within <answer> and </answer> tags."""
-    """Reward function that checks if the reasoning process is enclosed within <think> and </think> tags, by checking if there is a single </think> tag in the completion."""
-
-    def count_tags(text: str) -> float:
-        count = 0.0
-        # We only count </think> tag, because <think> tag is available in system prompt
-        if text.count("\n</think>\n") == 1:
-            #count += 1.0
-
-            # New: add 1 if there is a non-empty \boxed{...} after the final </think>
-            last_think = text.rfind("\n</think>\n")
-            if last_think != -1:
-                after = text[last_think + len("\n</think>\n"):]
-                boxes = re.findall(r"\\boxed\s*{\s*([^}]*)\s*}", after, flags=re.DOTALL)
-                if any(b.strip() for b in boxes):
-                    count += 1.0
-        return count
-
-    contents = [completion[0]["content"] for completion in completions]
-    format_rewards = [count_tags(c) for c in contents]
-    print("--------------------------------Format rewards--------------------------------")
-    print(format_rewards)
-    print("--------------------------------Format rewards--------------------------------")
-    return format_rewards
 
 #-------------------------------- Reward utils --------------------------------#
 
