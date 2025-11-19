@@ -22,6 +22,7 @@ from beamrl.utils import (
     TPH_SYSTEM_PROMPT
 )
 from beamrl.callback import FixedPromptEvaluationCallback, PushToHubRevisionCallback
+from beamrl.eval_callback import DatasetEvaluationCallback
 from beamrl.rewards import (
     accuracy_reward,
     format_reward)
@@ -172,10 +173,19 @@ def main():
     rl_reward_funcs = [RL_POST_TRAIN_REWARD_MAP[func] for func in pt_args.rl_post_train_reward_funcs]
     training_args.reward_weights = pt_args.rl_post_train_reward_weights
 
+    # callbacks = [
+    #     FixedPromptEvaluationCallback(system_prompt=SYSTEM_PROMPT, eval_steps=training_args.save_steps),
+    #     # PushToHubRevisionCallback(dataset_name=pt_args.model_post_train_dataset_name, use_peft=model_args.use_peft)
+    # ]
     callbacks = [
-        FixedPromptEvaluationCallback(system_prompt=SYSTEM_PROMPT, eval_steps=training_args.save_steps),
-        # PushToHubRevisionCallback(dataset_name=pt_args.model_post_train_dataset_name, use_peft=model_args.use_peft)
-    ]
+    DatasetEvaluationCallback(
+        eval_dataset_name="beamrl_eval",
+        eval_split="train",
+        num_generations=5,  # Generate 5 answers per question
+        eval_steps=training_args.save_steps,
+        batch_size=8
+    )
+]
 
     trainer = GRPOTrainer(
         model=model,
