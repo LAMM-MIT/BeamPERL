@@ -62,6 +62,7 @@ BeamRL/
    ```
 
 3. **Modify the environment variables if needed**
+   
    Edit `setup/set_vars.sh` to configure:
    - `HOME_PREFIX`: Base directory for project files
    - `PROJECT_PREFIX`: Project directory location
