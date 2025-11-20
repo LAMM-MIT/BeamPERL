@@ -31,28 +31,6 @@ The assistant first thinks about the reasoning process in the mind and then prov
 with the answer. The reasoning process and answer are enclosed within <think> and </think> tags, and the answer final answer is put within \\boxed{{}}. I.e., <think> reasoning process here </think> answer here and then the final answer within \\boxed{{}}.
 """
 
-# SYSTEM_PROMPT = """
-# A conversation between User and Assistant. The user asks a question, and the Assistant solves it.
-# The assistant first thinks about the reasoning process in the mind and then provides the user with the answer, and put your final answer within \\boxed{{}} .
-# The reasoning process and answer are enclosed within <think> </think> tags, respectively, 
-# i.e., <think> reasoning process here </think> answer here and then the final answer within \\boxed{{}}.
-# """
-
-# the first question from aime 2024
-FIXED_PROMPT_FOR_EVALUATION = """
-Every morning Aya goes for a $9$-kilometer-long walk and stops at a coffee shop afterwards.
-When she walks at a constant speed of $s$ kilometers per hour, the walk takes her 4 hours, including $t$ minutes spent in the coffee shop.
-When she walks $s+2$ kilometers per hour, the walk takes her 2 hours and 24 minutes, including $t$ minutes spent in the coffee shop.
-Suppose Aya walks at $s+\frac{1}{2}$ kilometers per hour.
-Find the number of minutes the walk takes her, including the $t$ minutes spent in the coffee shop."""
-
-# def make_conv_for_grpo(example, system_prompt):
-#     return {
-#         "prompt": [
-#             {"role": "system", "content": system_prompt},
-#             {"role": "user", "content": f'{example["problem"][0]}<\\think>'},
-#         ]
-#     }
 def make_conv_for_grpo(example, system_prompt, num_questions=-1):
     """
     Create multiple conversation formats for GRPO training, one per question.
@@ -92,3 +70,11 @@ def make_conv_for_grpo(example, system_prompt, num_questions=-1):
         })
     
     return examples
+
+# def make_conv_for_grpo(example, system_prompt):
+#     return {
+#         "prompt": [
+#             {"role": "system", "content": system_prompt},
+#             {"role": "user", "content": f'{example["problem"][0]}<\\think>'},
+#         ]
+#     }

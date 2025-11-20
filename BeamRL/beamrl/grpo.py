@@ -21,7 +21,7 @@ from beamrl.utils import (
     RL_POST_TRAIN_CONFIG_MAP,
     SYSTEM_PROMPT
 )
-from beamrl.eval_callback import DatasetEvaluationCallback,PushToHubRevisionCallback
+from beamrl.eval_callback import DatasetEvaluationCallback, PushToHubRevisionCallback
 from beamrl.rewards import (
     accuracy_reward,
     format_reward)
@@ -114,9 +114,7 @@ def main():
     if "messages" in train_dataset.column_names:
         train_dataset = train_dataset.remove_columns("messages")
     elif "query" in train_dataset.column_names:
-        train_dataset = train_dataset.rename_column('query', 'problem')    
-
-    # SYSTEM_PROMPT = SYSTEM_PROMPT
+        train_dataset = train_dataset.rename_column('query', 'problem')
 
     # train_dataset = train_dataset.map(
     #     make_conv_for_grpo,

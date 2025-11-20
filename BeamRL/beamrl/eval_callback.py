@@ -11,7 +11,7 @@ from huggingface_hub import create_branch, create_repo, list_repo_commits, uploa
 from datasets import load_dataset
 from tqdm import tqdm
 
-from beamrl.utils import SYSTEM_PROMPT, RL_POST_TRAIN_CONFIG_MAP, FIXED_PROMPT_FOR_EVALUATION    # TO BE UPDATED
+from beamrl.utils import SYSTEM_PROMPT, RL_POST_TRAIN_CONFIG_MAP
 from beamrl.rewards import accuracy_reward, format_reward
 
 logger = logging.getLogger(__name__)
