@@ -25,7 +25,7 @@ max_new_tokens: 32768
 tasks:
   - aime24
   - aime25
-  - amc23
+  # - amc23
 
 # vLLM parameters for lighteval
 dtype: bfloat16
