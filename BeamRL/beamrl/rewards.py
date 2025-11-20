@@ -53,14 +53,21 @@ def accuracy_reward(completions: list[list[dict[str, str]]], solution: list[str]
         gold = parse_ground_truth(ground_truth_terms, symbol_regex=symbol_regex)
 
         if isinstance(pred, list) and isinstance(gold, list):
+            # Create a copy of pred that we can modify (remove matched elements)
+            pred_remaining = list(pred)
             ok = True
             for g in gold:
                 # print(f"Looking for {g} (type: {type(g)})")
-                # Accept if any prediction is within tolerance
-                if any(abs(p - g) <= tol for p in pred):
-                    # print(f"Found {g}")
-                    pass
-                else:
+                # Find a matching prediction and remove it to handle duplicates correctly
+                matched = False
+                for i, p in enumerate(pred_remaining):
+                    if abs(p - g) <= tol:
+                        # Found a match, remove it from remaining predictions
+                        pred_remaining.pop(i)
+                        matched = True
+                        # print(f"Found {g}")
+                        break
+                if not matched:
                     # print(f"Not found {g}")
                     ok = False
                     break

@@ -130,7 +130,7 @@ dependencies:
       - fastapi==0.115.12
       - filelock==3.18.0
       - fire==0.7.0
-      - flash-attn==2.7.3
+      # - flash-attn==2.7.3
       - flask==3.1.0
       - fonttools==4.57.0
       - frozenlist==1.5.0

@@ -1,5 +1,8 @@
-#!/bin/bash
-# python 3.10 + cuda 11.8.0
+#!/usr/bin/env bash
+
+. /opt/conda/etc/profile.d/conda.sh
+
+conda activate beamrl
 
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
@@ -16,3 +19,5 @@ pip install xformers==0.0.28.post3 --index-url https://download.pytorch.org/whl/
 pip install https://github.com/vllm-project/vllm/releases/download/v0.7.2/vllm-0.7.2+cu118-cp38-abi3-manylinux1_x86_64.whl
 
 conda env update -f ./setup/environment.yml
+
+pip install "flash-attn==2.7.3" --no-build-isolation --no-cache-dir

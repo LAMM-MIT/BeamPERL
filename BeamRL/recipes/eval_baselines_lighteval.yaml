@@ -1,0 +1,37 @@
+# Evaluation configuration for baseline models using lighteval
+# Used by: scripts/eval/eval_baselines.sh
+
+# Base models to evaluate (HuggingFace Hub model names)
+models:
+  - Qwen/Qwen2.5-1.5B
+  - deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+
+# Model-specific max lengths (will be auto-selected based on model name)
+# These are defaults; script will override based on model type:
+# - Qwen/Qwen2.5-Math-1.5B: 4096
+# - Qwen/Qwen2.5-1.5B: 32768
+# - Others: 32768
+max_model_length: 32768
+max_new_tokens: 32768
+
+# Lighteval tasks to evaluate (custom tasks from run_eval_custom_tasks.py)
+tasks:
+  - aime24
+  - aime25
+  - amc23
+
+# vLLM parameters for lighteval
+dtype: bfloat16
+gpu_memory_utilization: 0.7
+
+# Generation parameters for lighteval
+temperature: 0.6
+top_p: 0.95
+
+# GPU configuration
+cuda_visible_devices: 0,1
+# GPU_COUNT is auto-detected from torch.cuda.device_count()
+
+# Output directory structure: {OUTPUT_DIR}/{TASK}/42/{MODEL_NAME}
+# OUTPUT_DIR is set by set_vars.sh
+

@@ -1,0 +1,44 @@
+# Evaluation configuration for post-trained models using lighteval
+# Used by: scripts/eval/eval_post_train.sh
+
+# Model configuration
+model_name: DeepSeek-R1-Distill-Qwen-1.5B
+pt_type: grpo
+pt_config_name: beamrl
+pt_dataset_name: beamrl_train  # Matches model_post_train_dataset_name from training YAML
+save_name: beamrl_260101  # Matches save_name from training YAML
+
+# Checkpoints to evaluate
+checkpoints:
+  - checkpoint-3
+  - checkpoint-4
+
+# Model-specific max lengths (will be auto-selected based on model_name)
+# These are defaults; script will override based on model type:
+# - Qwen2.5-Math-1.5B: 4096
+# - Qwen2.5-1.5B: 32768
+# - Others: 32768
+max_model_length: 32768
+max_new_tokens: 32768
+
+# Lighteval tasks to evaluate (custom tasks from run_eval_custom_tasks.py)
+tasks:
+  - aime24
+  - aime25
+  - amc23
+
+# vLLM parameters for lighteval
+dtype: bfloat16
+gpu_memory_utilization: 0.7
+
+# Generation parameters for lighteval
+temperature: 0.6
+top_p: 0.95
+
+# GPU configuration
+cuda_visible_devices: 0,1
+# GPU_COUNT is auto-detected from torch.cuda.device_count()
+
+# Output directory structure: {OUTPUT_DIR}/{TASK}/42/{MODEL_NAME}_{PT_TYPE}_{PT_CONFIG_NAME}_{CKPT}
+# OUTPUT_DIR is set by set_vars.sh
+
