@@ -34,4 +34,3 @@ cuda_visible_devices: 0,1
 
 # Output directory structure: {OUTPUT_DIR}/{TASK}/42/{MODEL_NAME}
 # OUTPUT_DIR is set by set_vars.sh
-

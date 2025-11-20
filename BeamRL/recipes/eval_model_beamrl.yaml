@@ -24,7 +24,7 @@ eval_split: train  # Dataset split to evaluate on
 
 # Generation parameters
 max_prompt_length: 512
-max_generation_length: 4096
+max_generation_length: 32000
 batch_size: 8
 num_generations: 5
 temperature: 0.6
