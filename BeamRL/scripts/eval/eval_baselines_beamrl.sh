@@ -22,57 +22,8 @@ echo ""
 echo "GPU_COUNT: ${GPU_COUNT}"
 echo ""
 
-# Parse YAML config using Python
-eval $(python3 <<EOF
-import yaml
-import sys
-import json
-
-with open('${EVAL_CONFIG}', 'r') as f:
-    config = yaml.safe_load(f)
-
-# Handle models list
-models = config.get('models', ['Qwen/Qwen2.5-1.5B', 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B'])
-model_str = ' '.join(f'"{m}"' for m in models)
-print(f"MODEL_LIST=({model_str})")
-
-# Evaluation parameters
-print(f"MAX_PROMPT_LENGTH={config.get('max_prompt_length', 512)}")
-print(f"MAX_GENERATION_LENGTH={config.get('max_generation_length', 4096)}")
-print(f"BATCH_SIZE={config.get('batch_size', 8)}")
-print(f"NUM_GENERATIONS={config.get('num_generations', 5)}")
-print(f"TEMPERATURE={config.get('temperature', 0.6)}")
-
-# Dataset config
-print(f"EVAL_DATASET_NAME=\"{config.get('eval_dataset_name', 'beamrl_eval')}\"")
-eval_dataset_config = config.get('eval_dataset_config')
-if eval_dataset_config:
-    print(f"EVAL_DATASET_CONFIG=\"{eval_dataset_config}\"")
-else:
-    print("EVAL_DATASET_CONFIG=\"\"")
-print(f"EVAL_SPLIT=\"{config.get('eval_split', 'train')}\"")
-max_eval_samples = config.get('max_eval_samples')
-if max_eval_samples:
-    print(f"MAX_EVAL_SAMPLES={max_eval_samples}")
-else:
-    print("MAX_EVAL_SAMPLES=\"\"")
-
-# vLLM parameters
-print(f"MAX_MODEL_LEN={config.get('max_model_len', 32768)}")
-print(f"GPU_MEMORY_UTILIZATION={config.get('gpu_memory_utilization', 0.7)}")
-print(f"DTYPE=\"{config.get('dtype', 'bfloat16')}\"")
-
-# WandB config
-print(f"LOG_WANDB={str(config.get('log_wandb', True)).lower()}")
-print(f"WANDB_PROJECT=\"{config.get('wandb_project', 'beamrl-eval-baselines')}\"")
-
-# Model-specific max lengths (for compatibility)
-max_model_length = config.get('max_model_length', 32768)
-max_new_tokens = config.get('max_new_tokens', 32768)
-print(f"DEFAULT_MAX_MODEL_LENGTH={max_model_length}")
-print(f"DEFAULT_MAX_NEW_TOKENS={max_new_tokens}")
-EOF
-)
+# Parse YAML config using Python script
+eval $(python3 ./scripts/eval/parse_eval_config.py "${EVAL_CONFIG}" --mode baselines_beamrl)
 
 for MODEL_NAME in "${MODEL_LIST[@]}"; do
     echo "Evaluating baseline model: ${MODEL_NAME}"

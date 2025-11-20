@@ -15,48 +15,8 @@ echo "Using config: ${EVAL_CONFIG}"
 
 source "./setup/set_vars.sh"
 
-# Parse YAML config using Python
-eval $(python3 <<EOF
-import yaml
-import sys
-
-with open('${EVAL_CONFIG}', 'r') as f:
-    config = yaml.safe_load(f)
-
-# Extract values and create bash variables
-print(f"MODEL_NAME=\"{config.get('model_name', 'DeepSeek-R1-Distill-Qwen-1.5B')}\"")
-print(f"PT_TYPE=\"{config.get('pt_type', 'grpo')}\"")
-print(f"PT_CONFIG_NAME=\"{config.get('pt_config_name', 'beamrl')}\"")
-print(f"PT_DATASET_NAME=\"{config.get('pt_dataset_name', 'beamrl_train')}\"")
-print(f"SAVE_NAME=\"{config.get('save_name', 'beamrl_260101')}\"")
-
-# Handle checkpoints list
-checkpoints = config.get('checkpoints', ['checkpoint-3', 'checkpoint-4'])
-ckpt_str = ' '.join(f'"{c}"' for c in checkpoints)
-print(f"CKPT_LIST=({ckpt_str})")
-
-# Handle tasks list
-tasks = config.get('tasks', ['aime24', 'aime25', 'amc23'])
-task_str = ' '.join(f'"{t}"' for t in tasks)
-print(f"TASKS=({task_str})")
-
-# Model-specific max lengths (defaults)
-print(f"DEFAULT_MAX_MODEL_LENGTH={config.get('max_model_length', 32768)}")
-print(f"DEFAULT_MAX_NEW_TOKENS={config.get('max_new_tokens', 32768)}")
-
-# vLLM parameters
-print(f"DTYPE=\"{config.get('dtype', 'bfloat16')}\"")
-print(f"GPU_MEMORY_UTILIZATION={config.get('gpu_memory_utilization', 0.7)}")
-
-# Generation parameters
-print(f"TEMPERATURE={config.get('temperature', 0.6)}")
-print(f"TOP_P={config.get('top_p', 0.95)}")
-
-# GPU configuration
-cuda_devices = config.get('cuda_visible_devices', '0,1')
-print(f"CUDA_VISIBLE_DEVICES=\"{cuda_devices}\"")
-EOF
-)
+# Parse YAML config using Python script
+eval $(python3 ./scripts/eval/parse_eval_config.py "${EVAL_CONFIG}" --mode post_train_lighteval)
 
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}"
 GPU_COUNT=$(python -c "import torch; print(torch.cuda.device_count())")

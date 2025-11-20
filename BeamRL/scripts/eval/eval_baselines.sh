@@ -15,41 +15,8 @@ echo "Using config: ${EVAL_CONFIG}"
 
 source "./setup/set_vars.sh"
 
-# Parse YAML config using Python
-eval $(python3 <<EOF
-import yaml
-import sys
-
-with open('${EVAL_CONFIG}', 'r') as f:
-    config = yaml.safe_load(f)
-
-# Handle models list
-models = config.get('models', ['Qwen/Qwen2.5-1.5B', 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B'])
-model_str = ' '.join(f'"{m}"' for m in models)
-print(f"MODEL_LIST=({model_str})")
-
-# Handle tasks list
-tasks = config.get('tasks', ['aime24', 'aime25', 'amc23'])
-task_str = ' '.join(f'"{t}"' for t in tasks)
-print(f"TASKS=({task_str})")
-
-# Model-specific max lengths (defaults)
-print(f"DEFAULT_MAX_MODEL_LENGTH={config.get('max_model_length', 32768)}")
-print(f"DEFAULT_MAX_NEW_TOKENS={config.get('max_new_tokens', 32768)}")
-
-# vLLM parameters
-print(f"DTYPE=\"{config.get('dtype', 'bfloat16')}\"")
-print(f"GPU_MEMORY_UTILIZATION={config.get('gpu_memory_utilization', 0.7)}")
-
-# Generation parameters
-print(f"TEMPERATURE={config.get('temperature', 0.6)}")
-print(f"TOP_P={config.get('top_p', 0.95)}")
-
-# GPU configuration
-cuda_devices = config.get('cuda_visible_devices', '0,1')
-print(f"CUDA_VISIBLE_DEVICES=\"{cuda_devices}\"")
-EOF
-)
+# Parse YAML config using Python script
+eval $(python3 ./scripts/eval/parse_eval_config.py "${EVAL_CONFIG}" --mode baselines_lighteval)
 
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES}"
 GPU_COUNT=$(python -c "import torch; print(torch.cuda.device_count())")
