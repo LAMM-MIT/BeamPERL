@@ -1,5 +1,5 @@
 # Evaluation configuration for baseline models using lighteval
-# Used by: scripts/eval/eval_baselines.sh
+# Used by: scripts/eval/eval_baselines_lighteval.sh
 
 # Base models to evaluate (HuggingFace Hub model names)
 models:

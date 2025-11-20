@@ -1,5 +1,5 @@
 # Evaluation configuration for post-trained models using lighteval
-# Used by: scripts/eval/eval_post_train.sh
+# Used by: scripts/eval/eval_model_lighteval.sh
 
 # Model configuration
 model_name: DeepSeek-R1-Distill-Qwen-1.5B
