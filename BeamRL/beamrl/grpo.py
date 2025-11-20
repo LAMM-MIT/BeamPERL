@@ -21,7 +21,7 @@ from beamrl.utils import (
     RL_POST_TRAIN_CONFIG_MAP,
     SYSTEM_PROMPT
 )
-from beamrl.eval_callback import DatasetEvaluationCallback, PushToHubRevisionCallback
+from beamrl.eval_callback import DatasetEvaluationCallback
 from beamrl.rewards import (
     accuracy_reward,
     format_reward)
@@ -172,20 +172,19 @@ def main():
     rl_reward_funcs = [RL_POST_TRAIN_REWARD_MAP[func] for func in pt_args.rl_post_train_reward_funcs]
     training_args.reward_weights = pt_args.rl_post_train_reward_weights
 
-    callbacks = [
-        DatasetEvaluationCallback(
-            eval_dataset_name="beamrl_eval",
-            eval_split="train",
-            max_prompt_length=training_args.max_prompt_length,
-            max_generation_length=training_args.max_completion_length,
-            num_generations=3,
-            eval_steps=training_args.save_steps,
-            batch_size=4,
-            max_eval_samples=None,
-            temperature=training_args.temperature
-        ),
-        # PushToHubRevisionCallback(dataset_name=pt_args.model_post_train_dataset_name, use_peft=model_args.use_peft),
-    ]
+    # callbacks = [
+    #     DatasetEvaluationCallback(
+    #         eval_dataset_name="beamrl_eval",
+    #         eval_split="train",
+    #         max_prompt_length=training_args.max_prompt_length,
+    #         max_generation_length=training_args.max_completion_length,
+    #         num_generations=1,
+    #         eval_steps=training_args.save_steps,
+    #         batch_size=1,
+    #         max_eval_samples=4,
+    #         temperature=training_args.temperature
+    #     ),
+    # ]
 
     trainer = GRPOTrainer(
         model=model,
@@ -193,7 +192,7 @@ def main():
         reward_funcs=rl_reward_funcs,
         args=training_args,
         train_dataset=train_dataset,
-        callbacks=callbacks,
+        # callbacks=callbacks,
     )
 
     #########################
