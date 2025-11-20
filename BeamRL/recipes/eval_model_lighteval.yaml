@@ -19,7 +19,7 @@ checkpoints:
 # - Qwen2.5-1.5B: 32768
 # - Others: 32768
 max_model_length: 32768
-max_new_tokens: 32768
+max_new_tokens: 30000
 
 # Lighteval tasks to evaluate (custom tasks from run_eval_custom_tasks.py)
 tasks:

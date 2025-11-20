@@ -15,7 +15,6 @@ checkpoints:
 # Model-specific max lengths (will be auto-selected based on model_name)
 # These are defaults; script will override based on model type
 max_model_length: 32768
-max_new_tokens: 32768
 
 # Evaluation dataset configuration
 eval_dataset_name: beamrl_eval  # Uses RL_POST_TRAIN_CONFIG_MAP
@@ -24,9 +23,9 @@ eval_split: train  # Dataset split to evaluate on
 
 # Generation parameters
 max_prompt_length: 512
-max_generation_length: 32000
+max_generation_length: 4096
 batch_size: 8
-num_generations: 5
+num_generations: 7
 temperature: 0.6
 
 # vLLM parameters
@@ -40,4 +39,4 @@ wandb_project: beamrl-eval
 # wandb_run_name will be auto-generated as: {model_name}_{pt_type}_{pt_config_name}_{ckpt}_beamrl_eval
 
 # Optional: limit number of evaluation samples (null = all)
-max_eval_samples: 8 # null
+max_eval_samples: null
