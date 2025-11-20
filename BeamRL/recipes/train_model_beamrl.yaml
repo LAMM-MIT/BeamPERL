@@ -4,8 +4,8 @@ rl_post_train_reward_funcs:
 - format
 - accuracy
 rl_post_train_reward_weights:
-- 1.0
-- 2.0
+- 0.333
+- 0.667
 
 
 # Model configs from trl
@@ -30,7 +30,7 @@ bf16: true
 use_vllm: true
 vllm_device: cuda:0
 vllm_gpu_memory_utilization: 0.4
-vllm_max_model_len: 2560                  # Must not be shorter than the maximum prompt length and the maximum completion length combined
+vllm_max_model_len: 2304                  # Must not be shorter than the maximum prompt length and the maximum completion length combined
 gradient_accumulation_steps: 4
 gradient_checkpointing: true
 gradient_checkpointing_kwargs:
@@ -49,7 +49,7 @@ lr_scheduler_type: cosine_with_min_lr
 lr_scheduler_kwargs:
   min_lr_rate: 0.1
 max_prompt_length: 512
-max_completion_length: 2048
+max_completion_length: 1792
 # max_steps: 2                             # Overrides the number of epochs, comment out to use num_train_epochs
 num_generations: 4
 num_train_epochs: 1

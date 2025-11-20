@@ -178,7 +178,7 @@ def main():
             eval_split="train",
             max_prompt_length=training_args.max_prompt_length,
             max_generation_length=training_args.max_completion_length,
-            num_generations=5,
+            num_generations=3,
             eval_steps=training_args.save_steps,
             batch_size=4,
             max_eval_samples=None,
@@ -193,7 +193,8 @@ def main():
         reward_funcs=rl_reward_funcs,
         args=training_args,
         train_dataset=train_dataset,
-        callbacks=callbacks)
+        callbacks=callbacks,
+    )
 
     #########################
     # Training and Evaluation
