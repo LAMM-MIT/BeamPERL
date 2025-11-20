@@ -37,7 +37,7 @@ export OUTPUT_DIR="${PROJECT_DIR}/outputs"
 export LOGGING_DIR="${PROJECT_DIR}/logs"
 mkdir -p "${CKPT_DIR}" "${DATA_DIR}" "${OUTPUT_DIR}" "${LOGGING_DIR}"
 
-export WANDB_API_KEY="f3f18d2e12f49aba476e59238bd0a87e4dc38c61"                                                         # Personal wandb API key
+export WANDB_API_KEY=""                                                         # Personal wandb API key
 export WANDB_PROJECT="${PROJECT_NAME}"
 export WANDB_DIR="${OUTPUT_DIR}"
 
@@ -47,7 +47,7 @@ export CACHE_DIR="${PROJECT_DIR}/.cache"
 export WANDB_CACHE_DIR="${CACHE_DIR}"
 export TRITON_CACHE_DIR="${CACHE_DIR}/triton_cache"
 
-export HF_TOKEN="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"                                                              # Personal huggingface API key
+export HF_TOKEN=""                                                              # Personal huggingface API key
 git config --global credential.helper store
 hf auth login --token $HF_TOKEN --add-to-git-credential
 
