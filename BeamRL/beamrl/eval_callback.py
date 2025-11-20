@@ -33,12 +33,14 @@ class DatasetEvaluationCallback(TrainerCallback):
                  eval_dataset_config: str | None = None,
                  eval_split: str = "test",
                  system_prompt=SYSTEM_PROMPT,
+                 max_prompt_length=512,
                  max_generation_length=4096,
                  eval_steps=500,
                  batch_size=8,
                  max_eval_samples: int | None = None,
                  symbol_regex: str = "P",
-                 num_generations: int = 5):
+                 num_generations: int = 5,
+                 temperature: float = 0.6):
         """
         Args:
             eval_dataset_name: Name of the dataset from HuggingFace Hub (or key from RL_POST_TRAIN_CONFIG_MAP)
@@ -51,20 +53,27 @@ class DatasetEvaluationCallback(TrainerCallback):
             max_eval_samples: Maximum number of samples to evaluate (None = all)
             symbol_regex: Symbol regex pattern for accuracy evaluation (default: "P")
             num_generations: Number of generations per question for majority@k evaluation (default: 5)
+            temperature: Temperature for generation (default: 0.6)
         """
         self.eval_dataset_name = eval_dataset_name
         self.eval_dataset_config = eval_dataset_config
         self.eval_split = eval_split
         self.system_prompt = system_prompt
+        self.max_prompt_length = max_prompt_length
         self.max_generation_length = max_generation_length
         self.eval_steps = eval_steps
         self.batch_size = batch_size
         self.max_eval_samples = max_eval_samples
         self.symbol_regex = symbol_regex
         self.num_generations = num_generations
+        self.temperature = temperature
         
         self.eval_dataset = None
         self.tokenizer = None
+
+        # For a single, growing WandB table
+        self.eval_table = None
+        self.eval_table_next_idx = 0  # global row/sample index across evals
 
     def on_init_end(self, args, state, control, processing_class=None, **kwargs):
         """Load the evaluation dataset and prepare tokenizer."""
@@ -94,6 +103,8 @@ class DatasetEvaluationCallback(TrainerCallback):
                 self.eval_dataset = self.eval_dataset.rename_column('question', 'problem')
             if 'problem' not in self.eval_dataset.column_names and 'prompt' in self.eval_dataset.column_names:
                 self.eval_dataset = self.eval_dataset.rename_column('prompt', 'problem')
+            if 'problem' not in self.eval_dataset.column_names and 'query' in self.eval_dataset.column_names:
+                self.eval_dataset = self.eval_dataset.rename_column('query', 'problem')
             
             # Limit dataset size if specified
             if self.max_eval_samples is not None and len(self.eval_dataset) > self.max_eval_samples:
@@ -123,35 +134,53 @@ class DatasetEvaluationCallback(TrainerCallback):
                 
                 logger.info(f"Evaluation metrics at step {state.global_step}: {wandb_metrics}")
                 
-                # Create and log table with prompts, generations, and per-generation metrics
-                table_data = []
-                for idx, (prompt, solution, generations, acc_rewards, fmt_rewards) in enumerate(
+                # Create the WandB table once, then append rows each eval
+                if self.eval_table is None:
+                    columns = ["step", "sample_idx", "prompt", "solution"]
+                    for gen_idx in range(self.num_generations):
+                        columns.extend([
+                            f"generation_{gen_idx + 1}",
+                            f"accuracy_gen_{gen_idx + 1}",
+                            f"format_gen_{gen_idx + 1}",
+                        ])
+                    self.eval_table = wandb.Table(columns=columns)
+
+                # Append this eval's rows to the existing table
+                for local_idx, (prompt, solution, generations, acc_rewards, fmt_rewards) in enumerate(
                     zip(
                         metrics["prompts"],
                         metrics["solutions"],
                         metrics["generations"],
                         metrics["accuracy_rewards"],
-                        metrics["format_rewards"]
+                        metrics["format_rewards"],
                     )
                 ):
-                    row = {
-                        "step": state.global_step,
-                        "sample_idx": idx,
-                        "prompt": prompt,
-                        "solution": str(solution) if solution else "",
-                    }
-                    # Add columns for each generation
+                    global_idx = self.eval_table_next_idx
+
+                    # Base columns
+                    row_values = [
+                        state.global_step,                 # step
+                        global_idx,                        # global sample idx across evals
+                        prompt,
+                        str(solution) if solution else "",
+                    ]
+
+                    # Per-generation columns
                     for gen_idx in range(self.num_generations):
-                        row[f"generation_{gen_idx + 1}"] = generations[gen_idx] if gen_idx < len(generations) else ""
-                        row[f"accuracy_gen_{gen_idx + 1}"] = acc_rewards[gen_idx] if gen_idx < len(acc_rewards) else 0.0
-                        row[f"format_gen_{gen_idx + 1}"] = fmt_rewards[gen_idx] if gen_idx < len(fmt_rewards) else 0.0
-                    
-                    table_data.append(row)
-                
-                if table_data:
-                    df = pd.DataFrame(table_data)
-                    wandb.log({f"eval/generations_table_step_{state.global_step}": wandb.Table(dataframe=df)})
-                    logger.info(f"Logged {len(table_data)} evaluation samples to WandB table")
+                        gen_text = generations[gen_idx] if gen_idx < len(generations) else ""
+                        acc = acc_rewards[gen_idx] if gen_idx < len(acc_rewards) else 0.0
+                        fmt = fmt_rewards[gen_idx] if gen_idx < len(fmt_rewards) else 0.0
+                        row_values.extend([gen_text, acc, fmt])
+
+                    self.eval_table.add_data(*row_values)
+                    self.eval_table_next_idx += 1
+
+                # Log the same table object (W&B will show the growing table)
+                wandb.log({"eval/generations_table": self.eval_table})
+                logger.info(
+                    f"Appended {len(metrics['prompts'])} evaluation samples to WandB table "
+                    f"(total rows: {self.eval_table_next_idx})"
+                )
 
     def evaluate_dataset(self, model, tokenizer):
         """Evaluate the model on the full dataset."""
@@ -176,7 +205,7 @@ class DatasetEvaluationCallback(TrainerCallback):
             model.peft_config['default'].inference_mode = True
         
         model.eval()
-        
+
         # Store all generations per question for majority@k evaluation
         all_question_accuracy_rewards = []  # List of lists: [question_idx][generation_idx]
         all_format_rewards = []
@@ -190,128 +219,129 @@ class DatasetEvaluationCallback(TrainerCallback):
         
         with torch.no_grad():
             for i in tqdm(range(0, len(self.eval_dataset), self.batch_size), desc="Evaluating"):
-                batch = self.eval_dataset[i:i+self.batch_size]
-                
-                # Prepare prompts for batch
+                batch_dict = self.eval_dataset[i:i + self.batch_size]
+
+                # Turn dict-of-lists into list-of-dicts
+                batch = [
+                    {key: batch_dict[key][idx] for key in batch_dict.keys()}
+                    for idx in range(len(batch_dict[list(batch_dict.keys())[0]]))
+                ]
+
                 batch_prompts = []
                 batch_solutions = []
-                
+                # --- Build prompts and solutions ---
                 for example in batch:
-                    # Handle problem field (can be string or list)
+                    # problem: string or list
                     if isinstance(example["problem"], str):
                         problem_text = example["problem"]
                     elif isinstance(example["problem"], list) and len(example["problem"]) > 0:
                         problem_text = example["problem"][0]
                     else:
                         problem_text = str(example["problem"])
-                    
-                    # Format prompt with chat template
+
                     messages = [
                         {"role": "system", "content": self.system_prompt},
-                        {"role": "user", "content": f'{problem_text}<\\think>'}
+                        {"role": "user", "content": f"{problem_text}<think>"}
                     ]
                     input_text = tokenizer.apply_chat_template(
-                        messages, 
-                        add_generation_prompt=True, 
-                        tokenize=False
+                        messages,
+                        add_generation_prompt=True,
+                        tokenize=False,
                     )
                     batch_prompts.append(input_text)
-                    
-                    # Get solution/answer
+
+                    # solution / answer
                     if "solution" in example:
                         solution = example["solution"]
                     elif "answer" in example:
                         solution = example["answer"]
                     else:
                         solution = ""
-                    
-                    # Handle solution format (can be list or string)
+
                     if isinstance(solution, list):
                         batch_solutions.append(solution)
                     else:
                         batch_solutions.append([solution] if solution else [])
-                
-                # Tokenize batch
+
+                # --- Tokenize once per batch ---
                 tokenized = tokenizer(
                     batch_prompts,
                     return_tensors="pt",
                     padding=True,
                     truncation=True,
-                    max_length=self.max_generation_length
+                    max_length=self.max_prompt_length,
                 )
                 tokenized = {k: v.to(model.device) for k, v in tokenized.items()}
-                
-                # Generate multiple times for each question
-                all_completions_per_question = []  # List of lists: [question_idx][generation_idx]
-                
-                for gen_idx in range(self.num_generations):
-                    # Generate
-                    outputs = model.generate(
-                        **tokenized,
-                        max_length=self.max_generation_length,
-                        temperature=0.01,
-                        top_k=1,
-                        top_p=1.0,
-                        pad_token_id=tokenizer.pad_token_id,
-                    )
-                    
-                    # Decode completions for this generation
-                    completions = []
-                    for j, output in enumerate(outputs):
-                        # Extract only the generated part (after the prompt)
-                        prompt_length = tokenized["input_ids"][j].shape[0]
-                        generated_ids = output[prompt_length:]
-                        completion_text = tokenizer.decode(generated_ids, skip_special_tokens=True)
-                        completions.append([{"content": completion_text}])
-                    
-                    all_completions_per_question.append(completions)
-                
-                # Reorganize: group by question instead of by generation
-                # all_completions_per_question[gen_idx][question_idx] -> question_completions[question_idx][gen_idx]
-                question_completions = []
-                batch_generations_text = []  # Store actual generation text for logging
-                for q_idx in range(len(batch)):
-                    question_completions.append([
-                        all_completions_per_question[gen_idx][q_idx]
-                        for gen_idx in range(self.num_generations)
-                    ])
-                    # Extract generation text for logging
-                    generations_text = [
-                        all_completions_per_question[gen_idx][q_idx][0]["content"]
-                        for gen_idx in range(self.num_generations)
-                    ]
-                    batch_generations_text.append(generations_text)
-                
-                # Compute rewards for this batch
-                batch_question_accuracy_rewards = []  # List of lists: [question_idx][generation_idx]
+
+                # We generate num_generations completions per prompt in ONE call
+                prompt_length = tokenized["input_ids"].shape[1]  # number of input tokens
+
+                outputs = model.generate(
+                    **tokenized,
+                    max_new_tokens=self.max_generation_length,
+                    temperature=self.temperature,
+                    do_sample=True,
+                    num_return_sequences=self.num_generations,
+                    # use_cache=True,
+                )
+
+                # outputs shape: (batch_size * num_generations, total_seq_len)
+                # slice off prompt tokens
+                gen_only_ids = outputs[:, prompt_length:]
+
+                # Decode all at once
+                decoded = tokenizer.batch_decode(gen_only_ids, skip_special_tokens=True)
+
+                # Reshape: [batch_size][num_generations]
+                batch_size_eff = len(batch)
+                assert len(decoded) == batch_size_eff * self.num_generations
+
+                question_completions = []       # [question_idx][gen_idx] -> [{"content": text}]
+                batch_generations_text = []     # [question_idx][gen_idx] -> plain text
+
+                for q_idx in range(batch_size_eff):
+                    q_completions = []
+                    q_texts = []
+                    for gen_idx in range(self.num_generations):
+                        flat_idx = q_idx * self.num_generations + gen_idx
+                        completion_text = decoded[flat_idx]
+                        q_completions.append([{"content": completion_text}])
+                        q_texts.append(completion_text)
+
+                        # if you still want logging, keep but it will slow things down
+                        # print(f"[TPH] Generation {i + q_idx}-{gen_idx + 1}: {completion_text}")
+
+                    question_completions.append(q_completions)
+                    batch_generations_text.append(q_texts)
+
+                # --- Rewards per question ---
+                batch_question_accuracy_rewards = []
                 batch_format_rewards = []
-                
+
                 for question_completions_list, solution in zip(question_completions, batch_solutions):
-                    # Format reward for all generations of this question
+                    # Format rewards for all generations of this question
                     format_rewards = format_reward(question_completions_list)
                     batch_format_rewards.append(format_rewards)
-                    
-                    # Accuracy rewards for each generation
+
+                    # Accuracy rewards
                     if solution and len(solution) > 0:
-                        # Handle solution format - could be list of strings like ["0.1P", "1.9P"]
                         if isinstance(solution[0], str):
                             solution_terms = solution
                         else:
                             solution_terms = [str(s) for s in solution]
-                        
-                        # Repeat solution for each generation (accuracy_reward expects one solution per completion)
+
                         solutions_repeated = [solution_terms] * self.num_generations
-                        
-                        # accuracy_reward expects completions and solutions as lists
+
                         question_accuracy_rewards = accuracy_reward(
                             question_completions_list,
-                            solutions_repeated
+                            solutions_repeated,
                         )
                     else:
                         question_accuracy_rewards = [0.0] * self.num_generations
-                    
+
                     batch_question_accuracy_rewards.append(question_accuracy_rewards)
-                
+
+                # Aggregate
                 all_question_accuracy_rewards.extend(batch_question_accuracy_rewards)
                 all_format_rewards.extend(batch_format_rewards)
                 all_prompts.extend(batch_prompts)
@@ -357,59 +387,6 @@ class DatasetEvaluationCallback(TrainerCallback):
             "accuracy_rewards": all_question_accuracy_rewards,
             "format_rewards": all_format_rewards
         }
-
-
-class FixedPromptEvaluationCallback(TrainerCallback):
-    def __init__(self,
-                 system_prompt=SYSTEM_PROMPT,
-                 prompt=FIXED_PROMPT_FOR_EVALUATION,
-                 max_generation_length=4096, eval_steps=100):
-
-        self.system_prompt = system_prompt
-        self.prompt = prompt
-        self.max_generation_length = max_generation_length
-        self.eval_steps = eval_steps
-        self.completion_table = {
-            "step": [],
-            "prompt": [],
-            "completion": [],
-        }
-
-    def on_init_end(self, args, state, control, processing_class=None, **kwargs):
-        tokenizer = processing_class
-        messages = [{"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": self.prompt}]
-        input_text = tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
-        self.tokenized_prompt = tokenizer(input_text, return_tensors="pt")
-
-    def on_step_end(self, args, state, control, model=None, processing_class=None, **kwargs):
-        if state.global_step % self.eval_steps == 0:
-            if state.is_world_process_zero:
-                completion = self.eval_prompt(model, processing_class)
-                self.completion_table["step"].append(str(state.global_step))
-                self.completion_table["prompt"].append(self.prompt)
-                self.completion_table["completion"].append(completion)
-                df = pd.DataFrame(self.completion_table)
-                wandb.log({"completions": wandb.Table(dataframe=df)})
-
-    def eval_prompt(self, model, tokenizer):
-        if hasattr(model, "peft_config"):
-            model.peft_config['default'].inference_mode = True
-
-        self.tokenized_prompt.to(model.device)
-        outputs = model.generate(
-            **self.tokenized_prompt,
-            max_length=self.max_generation_length,
-            temperature=0.01,  # Very low temperature
-            top_k=1,  # Only consider the most likely token
-            top_p=1.0,  # Disable nucleus sampling or set to a high value
-        )
-        completion = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-        if hasattr(model, "peft_config"):
-            model.peft_config['default'].inference_mode = False
-
-        return completion
 
 class PushToHubRevisionCallback(TrainerCallback):
     def __init__(self, dataset_name, use_peft):

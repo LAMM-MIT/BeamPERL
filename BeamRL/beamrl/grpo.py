@@ -21,8 +21,7 @@ from beamrl.utils import (
     RL_POST_TRAIN_CONFIG_MAP,
     SYSTEM_PROMPT
 )
-from beamrl.callback import FixedPromptEvaluationCallback, PushToHubRevisionCallback    # TO BE DELETED
-from beamrl.eval_callback import DatasetEvaluationCallback                              # TO BE UPDATED
+from beamrl.eval_callback import DatasetEvaluationCallback,PushToHubRevisionCallback
 from beamrl.rewards import (
     accuracy_reward,
     format_reward)
@@ -130,7 +129,7 @@ def main():
 
     expanded_examples = []
     for example in train_dataset:
-        results = make_conv_for_grpo(example, SYSTEM_PROMPT, num_questions=None)
+        results = make_conv_for_grpo(example, SYSTEM_PROMPT, num_questions=2)
         expanded_examples.extend(results)
     
     # Create new dataset from expanded examples
@@ -138,6 +137,8 @@ def main():
 
     print("\n\nTrain_dataset\n\n")
     print(train_dataset)
+    print("\nFirst prompt:")
+    print(train_dataset[0]["prompt"])
     print("\n\n")
 
     ######################
@@ -173,18 +174,19 @@ def main():
     rl_reward_funcs = [RL_POST_TRAIN_REWARD_MAP[func] for func in pt_args.rl_post_train_reward_funcs]
     training_args.reward_weights = pt_args.rl_post_train_reward_weights
 
-    # callbacks = [
-    #     FixedPromptEvaluationCallback(system_prompt=SYSTEM_PROMPT, eval_steps=training_args.save_steps),
-    #     # PushToHubRevisionCallback(dataset_name=pt_args.model_post_train_dataset_name, use_peft=model_args.use_peft)
-    # ]
     callbacks = [
         DatasetEvaluationCallback(
             eval_dataset_name="beamrl_eval",
             eval_split="train",
-            num_generations=5,  # Generate 5 answers per question
+            max_prompt_length=training_args.max_prompt_length,
+            max_generation_length=training_args.max_completion_length,
+            num_generations=3,
             eval_steps=training_args.save_steps,
-            batch_size=8
-        )
+            batch_size=4,
+            max_eval_samples=None,
+            temperature=training_args.temperature
+        ),
+        # PushToHubRevisionCallback(dataset_name=pt_args.model_post_train_dataset_name, use_peft=model_args.use_peft),
     ]
 
     trainer = GRPOTrainer(

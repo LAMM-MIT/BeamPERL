@@ -1,4 +1,4 @@
-model_post_train_dataset_name: beamrl
+model_post_train_dataset_name: beamrl_train
 model_post_train_type: grpo
 rl_post_train_reward_funcs:
 - format
@@ -60,10 +60,9 @@ report_to:
 
 save_name: beamrl_260101
 save_strategy: steps
-save_steps: 2
+save_steps: 5
 save_total_limit: 10
 
 seed: 42
 temperature: 0.6
 warmup_ratio: 0.1
-
