@@ -178,7 +178,7 @@ def main():
             eval_split="train",
             max_prompt_length=training_args.max_prompt_length,
             max_generation_length=training_args.max_completion_length,
-            num_generations=3,
+            num_generations=5,
             eval_steps=training_args.save_steps,
             batch_size=4,
             max_eval_samples=None,
