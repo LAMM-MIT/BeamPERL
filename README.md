@@ -11,6 +11,7 @@ BeamPERL is a reinforcement learning framework designed to develop self-taught l
 - **vLLM Integration**: Uses vLLM for efficient inference during training
 - **HuggingFace Hub Integration**: Automatic model pushing to HuggingFace Hub
 - **WandB Logging**: Integrated experiment tracking with Weights & Biases
+- **Comprehensive Evaluation**: Evaluation scripts for baseline and post-trained models on BeamRL datasets and LightEval tasks
 
 ## Project Structure
 
@@ -20,18 +21,26 @@ BeamRL/
 │   ├── grpo.py                        # Main GRPO training script
 │   ├── rewards.py                     # Reward function implementations
 │   ├── utils.py                       # Utility functions and configurations
-│   ├── callback.py                    # Training callbacks
+│   ├── eval_callback.py               # Training callbacks for dataset evaluation
 │   └── merge_post_trained_models.py   # Model merging utilities
 ├── recipes/                           
-│   ├── train_model_beamrl.yaml           # Training configuration
+│   ├── train_model_beamrl.yaml        # Training configuration
+│   ├── eval_baselines_beamrl.yaml     # Baseline evaluation config (BeamRL dataset)
+│   ├── eval_baselines_lighteval.yaml  # Baseline evaluation config (LightEval tasks)
+│   ├── eval_model_beamrl.yaml         # Post-trained model eval config (BeamRL dataset)
+│   ├── eval_model_lighteval.yaml      # Post-trained model eval config (LightEval tasks)
 │   └── zero2.yaml                     # DeepSpeed ZeRO-2 configuration
 ├── scripts/
 │   ├── train/                         # Training scripts
 │   │   └── post_train_model_grpo.sh
 │   └── eval/                          # Evaluation scripts
-│       ├── eval_baselines.sh
-│       ├── eval_post_train.sh
-│       └── run_eval_custom_tasks.py
+│       ├── eval_baselines_beamrl.sh   # Evaluate baseline models on BeamRL dataset
+│       ├── eval_baselines_lighteval.sh# Evaluate baseline models on LightEval tasks
+│       ├── eval_model_beamrl.sh       # Evaluate post-trained models on BeamRL dataset
+│       ├── eval_model_lighteval.sh    # Evaluate post-trained models on LightEval tasks
+│       ├── run_dataset_eval.py        # Standalone dataset evaluation script
+│       ├── run_eval_custom_tasks.py   # Custom LightEval task definitions
+│       └── parse_eval_config.py       # YAML config parser for evaluation
 └── setup/                             # Environment setup
     ├── environment.yml                
     ├── set_vars.sh                    
@@ -112,10 +121,56 @@ Reward weights can be configured in the training YAML file.
 
 ### Datasets
 
-- **beamrl**: Custom beam mechanics QA dataset
-- **beamrl_eval**: Custom beam mechanics QA dataset
+- **beamrl_train**: Custom beam mechanics QA dataset for training
+- **beamrl_eval**: Custom beam mechanics QA dataset for evaluation
 - Datasets are automatically downloaded from HuggingFace using the `datasets` library.
 - The framework can be extended to support additional datasets via the `RL_POST_TRAIN_CONFIG_MAP` in `utils.py`
+
+## Evaluation
+
+The framework includes evaluation capabilities for both baseline and post-trained models.
+
+### Evaluation Scripts
+
+1. **Baseline Model Evaluation**:
+   - `eval_baselines_beamrl.sh`: Evaluates baseline models (e.g., Qwen2.5-1.5B, Qwen2.5-1.5B-Instruct, DeepSeek-R1-Distill-Qwen-1.5B) on the BeamRL evaluation dataset
+   - `eval_baselines_lighteval.sh`: Evaluates baseline models on LightEval tasks (AIME24, AIME25, AMC23)
+
+2. **Post-Trained Model Evaluation**:
+   - `eval_model_beamrl.sh`: Evaluates post-trained models on the BeamRL evaluation dataset
+   - `eval_model_lighteval.sh`: Evaluates post-trained models on LightEval tasks
+
+### Evaluation Metrics
+
+The evaluation scripts compute:
+- **Pass@1**: Binary if the model passes on the first generation (average score across the evaluation dataset)
+- **Majority@k**: Binary if the majority of k generations are correct (average score across the evaluation dataset)
+- **Average Accuracy**: Average accuracy across all generations
+- **Format Score**: Average format reward (checks for proper reasoning tags and boxed answers)
+
+### Running Evaluation
+
+Each evaluation script uses its own YAML configuration file in the `recipes/` directory. To run the different evaluations:
+
+```bash
+# Evaluate baseline models on BeamRL dataset
+bash ./scripts/eval/eval_baselines_beamrl.sh
+
+# Evaluate baseline models on LightEval tasks
+bash ./scripts/eval/eval_baselines_lighteval.sh
+
+# Evaluate post-trained models on BeamRL dataset
+bash ./scripts/eval/eval_model_beamrl.sh
+
+# Evaluate post-trained models on LightEval tasks
+bash ./scripts/eval/eval_model_lighteval.sh
+```
+
+The evaluation scripts automatically handle:
+- Model merging (for PEFT adapters)
+- Model-specific configuration (max lengths, etc.)
+- WandB logging
+- Batch processing of multiple checkpoints or models
 
 ## Dataset Generation
 
