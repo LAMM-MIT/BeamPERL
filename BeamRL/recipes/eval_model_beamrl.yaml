@@ -9,8 +9,15 @@ save_name: beamrl_260101  # Matches save_name from training YAML
 
 # Checkpoints to evaluate
 checkpoints:
-  - checkpoint-3
-  - checkpoint-4
+  - checkpoint-5
+  - checkpoint-10
+  - checkpoint-15
+  - checkpoint-20
+  - checkpoint-25
+  - checkpoint-30
+  - checkpoint-35
+  - checkpoint-40
+  - checkpoint-45
 
 # Model-specific max lengths (will be auto-selected based on model_name)
 # These are defaults; script will override based on model type
