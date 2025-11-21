@@ -184,7 +184,7 @@ This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) fo
 
 ## Acknowledgments
 
-This project is built upon the two open source repositories Tina and Open R1. The dataset generation uses a modified version of the SymBeam Python software. Furthermore, we greatly appreciate the wider open source community for sharing knowledge and resources in this rapidly evolving area that is parameter efficient reinforcement learning fine tuning of large language models.
+This project is built upon the two open source repositories Tina and Open R1. The dataset generation uses a custom version of the SymBeam Python software, modified by the authors. Furthermore, we greatly appreciate the wider open source community for sharing knowledge and resources in this rapidly evolving area that is parameter efficient reinforcement learning fine tuning of large language models.
 
 - **Tina: Tiny Reasoning Models via LoRA**
   > Wang, S., Asilis, J., Akgül, Ö. F., Bilgin, E. B., Liu, O., & Neiswanger, W. (2025). Tina: Tiny Reasoning Models via LoRA. [arXiv:2504.15777](https://arxiv.org/abs/2504.15777) [cs.CL]
