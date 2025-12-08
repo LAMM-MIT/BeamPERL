@@ -1211,6 +1211,8 @@ class beam:
           - 'bending_moment_info': dictionary with local extrema and null points
           - 'slope_info': dictionary with local extrema and null points
           - 'deflection_info': dictionary with local extrema and null points
+          - 'symbolic_info': dictionary with slope_null (exact symbolic solutions where slope equals 0)
+            and deflection_minimum (symbolic minimum deflection location and value)
         """
         # Solve the beam equilibrium problem
         self._check_beam_properties()
@@ -1270,6 +1272,7 @@ class beam:
         all_bending_moments = []
         all_slopes = []
         all_deflections = []
+        all_symbolic_slope_zeros = []  # Collect symbolic zero locations
 
         # Process segments to generate numerical data
         for isegment in self.segments:
@@ -1302,6 +1305,12 @@ class beam:
             # Deflection data
             deflection_numeric = np.vectorize(sym.lambdify(x, expressions['deflection']))(x_plot)
             all_deflections.extend(deflection_numeric.tolist())
+            
+            # Find symbolic zeros for slope (where slope equals 0)
+            symbolic_zeros = self._find_where_slope_equals_zero(isegment, subs)
+            # Format as [x, 0] pairs to match the format of 'null' results
+            for x_zero in symbolic_zeros:
+                all_symbolic_slope_zeros.append([x_zero, 0.0])
 
         # Create the plot data dictionary
         plot_data = {
@@ -1338,6 +1347,11 @@ class beam:
         plot_data['deflection_info'] = {
             'local_extrema': self._find_local_extrema(x_coords_array, deflections_array),
             'null': self._find_null_values_and_locations(x_coords_array, deflections_array)
+        }
+
+        plot_data['symbolic_info'] = {
+            'slope_null': all_symbolic_slope_zeros,
+            'deflection_minimum': self._find_minimum_deflection(subs)
         }
 
         return plot_data
@@ -1382,6 +1396,163 @@ class beam:
                     expressions[key] = expressions[key].subs({variable: 1})
         
         return expressions
+
+    def _find_where_slope_equals_zero(self, segment, subs):
+        """Finds where the slope (rotation) equals zero symbolically.
+        
+        Parameters
+        ----------
+        segment : _segment
+          The beam segment to process
+        subs : dict
+          Symbol substitutions to apply
+        
+        Returns
+        -------
+        zero_locations : list
+          List of x-coordinates where slope equals zero (within segment bounds)
+        """
+        # Get the slope expression with substitutions applied
+        slope_expr = segment.rotation.subs(subs)
+        
+        # Apply remaining substitutions (set other variables to 1, keep x)
+        variables = slope_expr.free_symbols
+        variables.discard(x)
+        for variable in variables:
+            slope_expr = slope_expr.subs({variable: 1})
+        
+        # Get segment bounds
+        x_start = float(segment.x_start.subs(subs))
+        x_end = float(segment.x_end.subs(subs))
+        
+        # Solve slope == 0 for x
+        try:
+            solutions = sym.solve(slope_expr, x, dict=True)
+        except:
+            # If solve fails, return empty list
+            return []
+        
+        zero_locations = []
+        
+        # Handle both dict=True format (list of dicts) and dict=False format (list of expressions)
+        if solutions and isinstance(solutions[0], dict):
+            # Extract x values from dictionary solutions
+            for sol_dict in solutions:
+                if x in sol_dict:
+                    sol = sol_dict[x]
+                    try:
+                        # Check if solution is real
+                        if sol.is_real or sol.is_real is None:
+                            x_val = float(sol)
+                            # Check if within segment bounds
+                            if x_start <= x_val <= x_end:
+                                zero_locations.append(x_val)
+                    except (TypeError, ValueError):
+                        # Skip non-numeric solutions
+                        continue
+        else:
+            # Handle list of expressions
+            for sol in solutions:
+                try:
+                    # Check if solution is real
+                    if sol.is_real or sol.is_real is None:
+                        x_val = float(sol)
+                        # Check if within segment bounds
+                        if x_start <= x_val <= x_end:
+                            zero_locations.append(x_val)
+                except (TypeError, ValueError):
+                    # Skip non-numeric solutions
+                    continue
+        
+        # Remove duplicates and sort
+        zero_locations = sorted(list(set(zero_locations)))
+        
+        return zero_locations
+
+    def _find_minimum_deflection(self, subs):
+        """Finds the symbolic minimum deflection across all beam segments.
+        
+        The minimum deflection occurs at points where:
+        1. The slope (rotation) equals zero (deflection extrema)
+        2. Segment endpoints
+        
+        Parameters
+        ----------
+        subs : dict
+          Symbol substitutions to apply
+        
+        Returns
+        -------
+        min_deflection : dict
+          Dictionary with keys:
+          - 'x_location': x-coordinate where minimum deflection occurs
+          - 'deflection_value': minimum deflection value (as SymPy expression or float)
+          - 'segment_index': index of segment containing minimum deflection
+        """
+        min_deflection_value = None
+        min_deflection_x = None
+        min_segment_idx = None
+        
+        # Process each segment
+        for seg_idx, segment in enumerate(self.segments):
+            # Get deflection expression with substitutions
+            deflection_expr = segment.deflection.subs(subs)
+            
+            # Apply remaining substitutions (set other variables to 1, keep x)
+            variables = deflection_expr.free_symbols
+            variables.discard(x)
+            for variable in variables:
+                deflection_expr = deflection_expr.subs({variable: 1})
+            
+            # Get segment bounds
+            x_start = float(segment.x_start.subs(subs))
+            x_end = float(segment.x_end.subs(subs))
+            
+            # Candidate points: endpoints and where slope = 0
+            candidate_x = [x_start, x_end]
+            
+            # Find where slope equals zero (deflection extrema)
+            slope_zeros = self._find_where_slope_equals_zero(segment, subs)
+            candidate_x.extend(slope_zeros)
+            
+            # Remove duplicates
+            candidate_x = sorted(list(set(candidate_x)))
+            
+            # Evaluate deflection at each candidate point
+            for x_candidate in candidate_x:
+                try:
+                    # Evaluate deflection at this x value
+                    deflection_at_x = deflection_expr.subs({x: x_candidate})
+                    
+                    # Convert to float if possible
+                    try:
+                        deflection_float = float(deflection_at_x)
+                    except (TypeError, ValueError):
+                        # If it's still symbolic, try to simplify and evaluate
+                        deflection_float = float(sym.N(deflection_at_x))
+                    
+                    # Check if this is the minimum so far
+                    if min_deflection_value is None or deflection_float < min_deflection_value:
+                        min_deflection_value = deflection_float
+                        min_deflection_x = x_candidate
+                        min_segment_idx = seg_idx
+                        
+                except (TypeError, ValueError, AttributeError):
+                    # Skip if evaluation fails
+                    continue
+        
+        if min_deflection_value is None:
+            return {
+                'x_location': None,
+                'deflection_value': None,
+                'segment_index': None
+            }
+        
+        return {
+            'x_location': min_deflection_x,
+            'deflection_value': min_deflection_value,
+            'segment_index': min_segment_idx
+        }
 
     def _find_local_extrema(self, x_coords, values):
         """Finds all local extrema (local maxima and local minima) in the data.
