@@ -11,7 +11,7 @@ BeamPERL is a reinforcement learning framework designed to develop self-taught l
 - **vLLM Integration**: Uses vLLM for efficient inference during training
 - **HuggingFace Hub Integration**: Automatic model pushing to HuggingFace Hub
 - **WandB Logging**: Integrated experiment tracking with Weights & Biases
-- **Comprehensive Evaluation**: Evaluation scripts for baseline and post-trained models on BeamRL datasets and LightEval tasks
+- **Comprehensive Evaluation**: Evaluation scripts for baseline and post-trained models on both beam mechanics and mathematical reasoning tasks
 
 ## Project Structure
 
