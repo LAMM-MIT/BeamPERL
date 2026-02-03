@@ -137,8 +137,8 @@ The framework includes evaluation capabilities for both baseline and post-traine
    - `eval_baselines_lighteval.sh`: Evaluates baseline models on mathematical reasoning evaluation datasets (AIME24, AIME25, AMC23)
 
 2. **Post-Trained Model Evaluation**:
-   - `eval_model_beamrl.sh`: Evaluates post-trained models on the BeamRL evaluation dataset
-   - `eval_model_lighteval.sh`: Evaluates post-trained models on LightEval tasks
+   - `eval_model_beamrl.sh`: Evaluates post-trained models on the beam mechanics evaluation dataset
+   - `eval_model_lighteval.sh`: Evaluates post-trained models on the mathematical reasoning evaluation datasets
 
 ### Evaluation Metrics
 
