@@ -133,8 +133,8 @@ The framework includes evaluation capabilities for both baseline and post-traine
 ### Evaluation Scripts
 
 1. **Baseline Model Evaluation**:
-   - `eval_baselines_beamrl.sh`: Evaluates baseline models (e.g., Qwen2.5-1.5B, Qwen2.5-1.5B-Instruct, DeepSeek-R1-Distill-Qwen-1.5B) on the BeamRL evaluation dataset
-   - `eval_baselines_lighteval.sh`: Evaluates baseline models on LightEval tasks (AIME24, AIME25, AMC23)
+   - `eval_baselines_beamrl.sh`: Evaluates baseline models (e.g., DeepSeek-R1-Distill-Qwen-1.5B) on the beam mechanics evaluation dataset
+   - `eval_baselines_lighteval.sh`: Evaluates baseline models on mathematical reasoning evaluation datasets (AIME24, AIME25, AMC23)
 
 2. **Post-Trained Model Evaluation**:
    - `eval_model_beamrl.sh`: Evaluates post-trained models on the BeamRL evaluation dataset
