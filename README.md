@@ -190,7 +190,7 @@ This project is built upon the two open source repositories Tina and Open R1. Th
   > Wang, S., Asilis, J., Akgül, Ö. F., Bilgin, E. B., Liu, O., & Neiswanger, W. (2025). Tina: Tiny Reasoning Models via LoRA. [arXiv:2504.15777](https://arxiv.org/abs/2504.15777) [cs.CL]
 
 - **Open R1**
-  > Hugging Face. (2025, January). Open R1: A fully open reproduction of DeepSeek-R1. [Open R1](https://github.com/huggingface/open-r1)
+  > Hugging Face. (2025, January). Open R1: A fully open reproduction of DeepSeek-R1. [GitHub](https://github.com/huggingface/open-r1)
 
 - **SymBeam**
   > Carneiro, A. (2020). SymBeam: A pedagogical package for beam bending. [GitHub](https://github.com/amcc1996/symbeam)
