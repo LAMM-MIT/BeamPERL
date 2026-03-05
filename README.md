@@ -198,11 +198,13 @@ This project is built upon the two open source repositories Tina and Open R1. Th
 ## Citation
 
 ```bibtex
-@misc{hage2025beamperl,
-  title={BeamPERL: Parameter-Efficient Reinforcement Learning for Verifiable Beam Mechanics Problem-Solving},
-  author={Tarjei P. Hage and Markus J. Buehler},
-  year={2025},
-  archivePrefix={arXiv},
-  primaryClass={cs.CL}
+@misc{hage2026beamperlparameterefficientrlverifiable,
+      title={BeamPERL: Parameter-Efficient RL with Verifiable Rewards Specializes Compact LLMs for Structured Beam Mechanics Reasoning}, 
+      author={Tarjei Paule Hage and Markus J. Buehler},
+      year={2026},
+      eprint={2603.04124},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2603.04124}, 
 }
 ```
