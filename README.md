@@ -24,23 +24,34 @@ BeamRL/
 │   ├── eval_callback.py               # Training callbacks for dataset evaluation
 │   └── merge_post_trained_models.py   # Model merging utilities
 ├── recipes/                           
-│   ├── train_model_beamrl.yaml        # Training configuration
+│   ├── train_model_beamrl.yaml        # Training configuration (combined reward)
+│   ├── train_model_beamrl_format_only.yaml    # Ablation: format reward only
+│   ├── train_model_beamrl_accuracy_only.yaml  # Ablation: accuracy reward only
 │   ├── eval_baselines_beamrl.yaml     # Baseline evaluation config (BeamRL dataset)
 │   ├── eval_baselines_lighteval.yaml  # Baseline evaluation config (LightEval tasks)
 │   ├── eval_model_beamrl.yaml         # Post-trained model eval config (BeamRL dataset)
+│   ├── eval_model_beamrl_v2.yaml      # Post-trained model eval config (expanded v2 dataset)
 │   ├── eval_model_lighteval.yaml      # Post-trained model eval config (LightEval tasks)
 │   └── zero2.yaml                     # DeepSpeed ZeRO-2 configuration
 ├── scripts/
 │   ├── train/                         # Training scripts
 │   │   └── post_train_model_grpo.sh
-│   └── eval/                          # Evaluation scripts
-│       ├── eval_baselines_beamrl.sh   # Evaluate baseline models on BeamRL dataset
-│       ├── eval_baselines_lighteval.sh# Evaluate baseline models on LightEval tasks
-│       ├── eval_model_beamrl.sh       # Evaluate post-trained models on BeamRL dataset
-│       ├── eval_model_lighteval.sh    # Evaluate post-trained models on LightEval tasks
-│       ├── run_dataset_eval.py        # Standalone dataset evaluation script
-│       ├── run_eval_custom_tasks.py   # Custom LightEval task definitions
-│       └── parse_eval_config.py       # YAML config parser for evaluation
+│   ├── eval/                          # Evaluation scripts
+│   │   ├── eval_baselines_beamrl.sh   # Evaluate baseline models on BeamRL dataset
+│   │   ├── eval_baselines_lighteval.sh# Evaluate baseline models on LightEval tasks
+│   │   ├── eval_model_beamrl.sh       # Evaluate post-trained models on BeamRL dataset
+│   │   ├── eval_model_lighteval.sh    # Evaluate post-trained models on LightEval tasks
+│   │   ├── run_dataset_eval.py        # Standalone dataset evaluation script (seedable)
+│   │   ├── aggregate_eval_results.py  # Aggregate multi-seed results (overall + per-category)
+│   │   ├── run_eval_custom_tasks.py   # Custom LightEval task definitions
+│   │   └── parse_eval_config.py       # YAML config parser for evaluation
+│   └── experiments/                   # End-to-end experiment pipeline (steps 1-5)
+│       ├── run_full_pipeline.sh       # Master orchestration script
+│       ├── step1_gen_eval_data.sh     # Generate expanded (v2) evaluation dataset
+│       ├── step2_eval_original.sh     # Multi-seed eval of original checkpoints
+│       ├── step3_train_ablations.sh   # Train reward-ablation models
+│       ├── step4_eval_ablations.sh    # Multi-seed eval of ablation models
+│       └── step5_aggregate.sh         # Aggregate all results into CSVs
 └── setup/                             # Environment setup
     ├── environment.yml                
     ├── set_vars.sh                    
@@ -121,10 +132,20 @@ Reward weights can be configured in the training YAML file.
 
 ### Datasets
 
-- **beamrl_train**: Custom beam mechanics QA dataset for training
-- **beamrl_eval**: Custom beam mechanics QA dataset for evaluation
+- **beamrl_train**: Custom beam mechanics QA dataset for training ([`tphage/BeamRL-TrainData`](https://huggingface.co/datasets/tphage/BeamRL-TrainData))
+- **beamrl_eval**: Custom beam mechanics QA dataset for evaluation ([`tphage/BeamRL-EvalData`](https://huggingface.co/datasets/tphage/BeamRL-EvalData), 24 samples)
+- **beamrl_eval_v2**: Expanded evaluation dataset (`tphage/BeamRL-EvalData-v2`, 123 samples across 6 categories: 30 in-distribution, 30 multi-load, 18 varying-supports, 15 distributed-load, 15 length-variation, 15 applied-moment). The original 24-sample evaluation set is included bit-identically as a subset.
 - Datasets are automatically downloaded from HuggingFace using the `datasets` library.
 - The framework can be extended to support additional datasets via the `RL_POST_TRAIN_CONFIG_MAP` in `utils.py`
+
+### Reward Ablation Training
+
+Two additional training recipes isolate the contribution of each reward component, using the same hyperparameters as the main configuration:
+
+- `train_model_beamrl_format_only.yaml`: trains with the format reward only
+- `train_model_beamrl_accuracy_only.yaml`: trains with the accuracy reward only
+
+To run an ablation, point the training script at the corresponding recipe (e.g. by setting the config name used in `post_train_model_grpo.sh`).
 
 ## Evaluation
 
@@ -172,11 +193,41 @@ The evaluation scripts automatically handle:
 - WandB logging
 - Batch processing of multiple checkpoints or models
 
+### Multi-Seed Evaluation
+
+`eval_model_beamrl.sh` runs the evaluation once per seed (default seeds: 42, 123, 456) so that metrics can be reported as mean ± standard deviation. Adapters are merged once, then each merged checkpoint is evaluated under every seed. Override the seeds via:
+
+```bash
+EVAL_SEEDS="42 123" bash ./scripts/eval/eval_model_beamrl.sh
+```
+
+After all runs complete, aggregate the per-run JSON results into summary CSVs:
+
+```bash
+python ./scripts/eval/aggregate_eval_results.py --output_dir <output_dir> --per_category
+```
+
+This produces an overall summary (`aggregated_results.csv`) and, with `--per_category`, a per-category breakdown across the evaluation dataset's sample categories.
+
+### Experiment Pipeline
+
+`scripts/experiments/` contains the end-to-end pipeline used for the paper's expanded evaluation and reward-ablation experiments:
+
+1. `step1_gen_eval_data.sh` — generate and upload the expanded (v2) evaluation dataset (GPU for LLM question generation; `--no-llm` for template questions)
+2. `step2_eval_original.sh` — multi-seed evaluation of the original BeamPERL checkpoints on the v2 dataset
+3. `step3_train_ablations.sh` — train the format-only and accuracy-only ablation models
+4. `step4_eval_ablations.sh` — multi-seed evaluation of the ablation checkpoints
+5. `step5_aggregate.sh` — aggregate all results into overall and per-category CSVs
+
+`run_full_pipeline.sh` runs all five steps in sequence; in practice the steps are usually run independently (training takes days). Each script's header documents its prerequisites and GPU requirements.
+
 ## Dataset Generation
 
 The `DataGen/` directory contains a Jupyter notebook (`dataGen.ipynb`) for generating synthetic beam mechanics datasets used for training. The dataset generation process involves: (1) creating beam configurations with varying symbolic parameters (lengths, loads, support positions), (2) solving beam equations symbolically using the SymBeam library to obtain reactions, moments, and deflections, (3) generating natural language questions using LLMs that ask about reaction forces at supports, and (4) extracting ground-truth answers from the solved beam equations. The notebook uploads the final processed dataset to the HuggingFace Hub, which can then be used for training by BeamRL.
 
 Additionally, the `DataGen/` directory contains an evaluation dataset generation notebook (`dataGen_eval.ipynb`) for creating evaluation datasets used to assess model performance.
+
+The expanded (v2) evaluation dataset is produced by `DataGen/generate_eval_v2.py`. It generates 6 sample categories (in-distribution, multi-load, varying-supports, distributed-load, length-variation, applied-moment), solves each configuration symbolically with the bundled `symbeam_v2` solver, generates natural-language question variants with an LLM (or templates via `--no-llm`), verifies force/moment balance for every sample, includes the original 24-sample evaluation set bit-identically as a subset, and uploads the result to the HuggingFace Hub. `DataGen/test_signed_answer_format.py` contains unit tests for the signed-answer formatting used by the generator.
 
 ## License
 
