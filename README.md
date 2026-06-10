@@ -2,6 +2,10 @@
 
 BeamPERL is a reinforcement learning framework designed to develop self-taught language models capable of solving beam mechanics problems. It leverages Parameter-Efficient Fine-Tuning (PEFT) by applying tunable Low-Rank Adaptation (LoRA) layers to a small, distilled large reasoning model (LRM), while keeping the underlying LRM weights frozen. These LoRA layers are fine-tuned with Reinforcement Learning from Verifiable Rewards (RLVR) using a synthetic dataset of beam mechanics questions. The result is the PE-RLVR-FT BeamPERL model: a parameter-efficient, reinforcement-learning from verifiable rewards, fine-tuned large language model specialized in beam mechanics problem-solving.
 
+![BeamPERL training pipeline](trainingPipeline.png)
+
+*PE-RLVR-FT workflow: beam-mechanics questions from the synthetic dataset prompt a frozen base model augmented with trainable LoRA adapters. For each prompt the model samples a group of G candidate responses, which a deterministic reward function scores for format adherence and symbolic beam-statics correctness, each assigning a binary reward. The rewards are converted into relative advantage signals and used by GRPO to update only the LoRA parameters, while all pretrained backbone weights remain frozen.*
+
 ## Features
 
 - **GRPO Training**: Implements Group Relative Policy Optimization for RLFT
