@@ -71,7 +71,7 @@ BeamRL/
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/tphage/BeamPERL.git
+   git clone https://github.com/lamm-mit/BeamPERL.git
    cd BeamPERL/BeamRL
    ```
 
