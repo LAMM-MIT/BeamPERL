@@ -19,10 +19,9 @@ REASON_CHAT_TEMPLATE = "{% if not add_generation_prompt is defined %}{% set add_
 
 # problem/question, (solution), answer => combined text for uninstructed models
 RL_POST_TRAIN_CONFIG_MAP = {
-    "beamrl_train": "tphage/BeamRL-TrainData",
-    "beamrl_eval":  "tphage/BeamRL-EvalData",
-    "tph_1":        "tphage/dataset_QA_250730_SFT",
-    "tph_2":        "tphage/dataset_QA_250907",
+    "beamrl_train":    "tphage/BeamRL-TrainData",
+    "beamrl_eval":     "tphage/BeamRL-EvalData",
+    "beamrl_eval_v2":  "tphage/BeamRL-EvalData-v2",
 }
 
 SYSTEM_PROMPT = """

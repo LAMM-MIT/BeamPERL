@@ -1,0 +1,41 @@
+# Evaluation config: original BeamPERL model on the expanded v2 eval dataset
+# Used by step2_eval_original.sh
+
+model_name: DeepSeek-R1-Distill-Qwen-1.5B
+pt_type: grpo
+pt_config_name: beamrl
+pt_dataset_name: beamrl_train
+save_name: beamrl_260101
+
+# Checkpoints to evaluate (checkpoint-5 through checkpoint-45)
+checkpoints:
+  - checkpoint-5
+  - checkpoint-10
+  - checkpoint-15
+  - checkpoint-20
+  - checkpoint-25
+  - checkpoint-30
+  - checkpoint-35
+  - checkpoint-40
+  - checkpoint-45
+
+max_model_length: 32768
+
+# Use the expanded v2 eval dataset
+eval_dataset_name: beamrl_eval_v2
+eval_dataset_config: null
+eval_split: train
+
+max_prompt_length: 512
+max_generation_length: 4096
+batch_size: 4
+num_generations: 7
+temperature: 0.6
+
+max_model_len: 32768
+gpu_memory_utilization: 0.7
+dtype: bfloat16
+
+log_wandb: true
+wandb_project: beamrl-eval-v2
+max_eval_samples: null
