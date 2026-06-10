@@ -75,7 +75,12 @@ def main():
     else:
         ckpt_postfix = f"full_{pt_args.model_post_train_type}_{pt_args.model_post_train_dataset_name}"
 
-    model_args.model_name_or_path = f"{ckpt_prefix}/base"
+    local_base = f"{ckpt_prefix}/base"
+    model_args.model_name_or_path = (
+        local_base
+        if os.path.isfile(os.path.join(local_base, "config.json"))
+        else f"deepseek-ai/{model_name_or_path}"
+    )
     training_args.output_dir = f"{ckpt_prefix}/{ckpt_postfix}/{save_bucket}"
     training_args.run_name = f"{model_name_or_path}_{ckpt_postfix}_{save_bucket}_{formatted_datetime}"
 

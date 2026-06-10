@@ -22,10 +22,17 @@ if __name__ == "__main__":
     adapter_type = args.adapter_type
     model_name = args.model_name
 
-    base_model_name_or_path = f"{ckpt_dir}/models/{model_name}/base"
+    local_base_path = f"{ckpt_dir}/models/{model_name}/base"
+    hf_base_id = f"deepseek-ai/{model_name}"
+    base_model_name_or_path = (
+        local_base_path
+        if os.path.isfile(os.path.join(local_base_path, "config.json"))
+        else hf_base_id
+    )
     adapter_model_name_or_path = f"{ckpt_dir}/models/{model_name}/{adapter_type}/{ckpt}"
     merged_model_name_or_path = f"{ckpt_dir}/models/{model_name}/{adapter_type}/{ckpt}-merged"
 
+    print("Base model:  ", base_model_name_or_path)
     print("Merged model will be saved to: ", merged_model_name_or_path)
 
     base_model = AutoModelForCausalLM.from_pretrained(
