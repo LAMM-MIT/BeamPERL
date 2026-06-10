@@ -9,10 +9,16 @@ This script evaluates a model on a dataset and computes:
 - Format score: average format reward across all generations
 """
 
+import os
+# Must be set before vLLM is imported so its multiprocessing workers use spawn
+# instead of fork. Fork fails when CUDA is already initialized in the parent
+# process (e.g. by torch.cuda.manual_seed_all called before LLM()).
+os.environ.setdefault("VLLM_WORKER_MULTIPROC_METHOD", "spawn")
+
 import argparse
 import logging
 import numpy as np
-import os
+import random
 import sys
 import torch
 from datasets import load_dataset
@@ -34,32 +40,37 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def load_model_and_tokenizer(model_path, use_peft=False, adapter_path=None, max_model_len=2048, gpu_memory_utilization=0.7, dtype="bfloat16"):
+def load_model_and_tokenizer(model_path, use_peft=False, adapter_path=None, max_model_len=2048, gpu_memory_utilization=0.7, dtype="bfloat16", tensor_parallel_size=None):
     """Load model using vLLM and tokenizer from checkpoint."""
     logger.info(f"Loading model from: {model_path} using vLLM")
-    
+
+    if tensor_parallel_size is None:
+        tensor_parallel_size = torch.cuda.device_count()
+    logger.info(f"Using tensor_parallel_size={tensor_parallel_size} ({tensor_parallel_size} GPU(s))")
+
     # Load tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    
+
     # Handle pad token based on model type
     if "Llama" in model_path:
         tokenizer.pad_token = "<|finetune_right_pad_id|>"
     elif "Qwen" in model_path:
         tokenizer.pad_token = "<|fim_pad|>"
-    
+
     # Note: vLLM requires merged models (not PEFT adapters)
     # If use_peft is True, the adapter should already be merged before calling this function
     if use_peft and adapter_path:
         logger.warning("vLLM requires merged models. Ensure adapter is merged before loading.")
         logger.info(f"Expected merged model path: {model_path}")
-    
+
     # Load model with vLLM
     llm = LLM(
         model=model_path,
         max_model_len=max_model_len,
         gpu_memory_utilization=gpu_memory_utilization,
         dtype=dtype,
-        trust_remote_code=True
+        trust_remote_code=True,
+        tensor_parallel_size=tensor_parallel_size,
     )
     
     logger.info("Model loaded successfully with vLLM")
@@ -112,7 +123,8 @@ def evaluate_dataset(
     max_generation_length=4096,
     batch_size=8,
     num_generations=5,
-    temperature=0.6
+    temperature=0.6,
+    seed=42
 ):
     """Evaluate the model on the full dataset using vLLM."""
     # Store all generations per question for majority@k evaluation
@@ -122,13 +134,14 @@ def evaluate_dataset(
     all_prompts = []
     all_solutions = []
     all_generations = []  # List of lists: [question_idx][generation_idx]
-    
-    # Create sampling params for vLLM
+
+    # Create sampling params for vLLM — seed controls sampling randomness
     sampling_params = SamplingParams(
         temperature=temperature,
         max_tokens=max_generation_length,
         n=num_generations,
-        stop=None
+        stop=None,
+        seed=seed
     )
     
     # Process dataset in batches
@@ -275,7 +288,11 @@ def evaluate_dataset(
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate a model on a dataset")
-    
+
+    # Reproducibility
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed for reproducible evaluation (default: 42)")
+
     # Model arguments
     parser.add_argument("--model_path", type=str, required=True,
                         help="Path to the model checkpoint (must be merged model for vLLM)")
@@ -289,6 +306,8 @@ def main():
                         help="GPU memory utilization for vLLM (default: 0.7)")
     parser.add_argument("--dtype", type=str, default="bfloat16",
                         help="Data type for vLLM (default: bfloat16)")
+    parser.add_argument("--tensor_parallel_size", type=int, default=1,
+                        help="Number of GPUs for tensor parallelism (default: 1; NCCL env flags in set_vars.sh disable multi-GPU)")
     
     # Dataset arguments
     parser.add_argument("--eval_dataset_name", type=str, required=True,
@@ -323,11 +342,21 @@ def main():
                         help="WandB run name")
     
     args = parser.parse_args()
-    
+
+    # Set random seeds for reproducibility across all RNG systems.
+    # Note: GPU non-determinism (CUDA parallel reductions) means results may
+    # not be bit-for-bit identical across runs, but seeds reduce variance.
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(args.seed)
+    logger.info(f"Random seed set to: {args.seed}")
+
     # Validate arguments
     if args.use_peft and args.adapter_path is None:
         raise ValueError("--adapter_path is required when --use_peft is True")
-    
+
     # Initialize WandB if requested
     if args.log_wandb:
         import wandb
@@ -344,7 +373,8 @@ def main():
         adapter_path=args.adapter_path,
         max_model_len=args.max_model_len,
         gpu_memory_utilization=args.gpu_memory_utilization,
-        dtype=args.dtype
+        dtype=args.dtype,
+        tensor_parallel_size=args.tensor_parallel_size
     )
     
     # Load evaluation dataset
@@ -366,7 +396,8 @@ def main():
         max_generation_length=args.max_generation_length,
         batch_size=args.batch_size,
         num_generations=args.num_generations,
-        temperature=args.temperature
+        temperature=args.temperature,
+        seed=args.seed
     )
     
     # Print results
@@ -375,6 +406,7 @@ def main():
     print("="*60)
     print(f"Dataset: {args.eval_dataset_name} ({args.eval_split})")
     print(f"Model: {args.model_path}")
+    print(f"Seed: {args.seed}")
     print(f"Number of samples: {metrics['num_samples']}")
     print(f"Generations per sample: {metrics['num_generations_per_sample']}")
     print(f"\nMetrics:")
@@ -437,6 +469,7 @@ def main():
         import json
         # Convert numpy types to native Python types for JSON serialization
         output_metrics = {
+            "seed": args.seed,
             "accuracy_at_1": metrics["accuracy_at_1"],
             "accuracy_majority": metrics["accuracy_majority"],
             "accuracy_avg": metrics["accuracy_avg"],
