@@ -203,8 +203,28 @@ def extract_coeffs_times_symbol(text: str, symbol_regex: str = _symbol_pat, type
         except Exception:
             pass
 
+    # (A3) Handle \frac{ <num> }{ <den> }<sym>  e.g., \frac{2}{9}P  (symbol OUTSIDE fraction)
+    # This form is common in LaTeX output: the model writes the coefficient as a
+    # standalone fraction and then multiplies by the symbol. Without this pattern
+    # the bare-symbol fallback (D) below would assign implicit coefficient 1.0
+    # to the P, silently misparsing every such answer. Critical for the
+    # OOD-applied-moment category whose reactions are c/9 P with small c.
+    frac_then_sym_pat = rf"""
+        \\frac
+        \s*{{\s*({_fraction_or_decimal})\s*}}
+        \s*{{\s*({_fraction_or_decimal})\s*}}
+        \s*(?:\\cdot|\*)?\s*({symbol_regex})\b
+    """
+    for m in re.finditer(frac_then_sym_pat, hay, flags=re.VERBOSE):
+        num_str, den_str, _sym = m.groups()
+        try:
+            val = _to_float(num_str) / _to_float(den_str)
+            items.append((m.start(), m.end(), val))
+        except Exception:
+            pass
+
     # (B) (num) [* or \cdot]? P, or (num)P  e.g., \frac{3}{2}P, 3P, 3*P
-    # But avoid overlaps with fraction patterns (A and A2)
+    # But avoid overlaps with fraction patterns (A, A2, A3)
     def overlaps_any(span, spans):
         s, e = span
         for s2, e2 in spans:
