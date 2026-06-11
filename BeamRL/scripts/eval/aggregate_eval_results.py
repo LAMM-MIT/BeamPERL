@@ -301,7 +301,8 @@ def aggregate_per_category(
     Returns:
         dict mapping (ckpt_id, category) -> {metric -> {"mean", "std", "n", "values"}}
     """
-    metrics_with_pass_k = METRICS + ["accuracy_pass_at_k"]
+    # METRICS already includes accuracy_pass_at_k (derived)
+    metrics_with_pass_k = METRICS
     majority_threshold = (pass_k + 1) // 2
 
     # per_ckpt_cat[ckpt][category][metric] -> list of per-seed means
